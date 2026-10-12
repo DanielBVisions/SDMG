@@ -81,7 +81,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .hero { padding-top: calc(2.1875 * var(--u)); }
 .hero__card {
   position: relative; overflow: hidden; border-radius: calc(1 * var(--u));
-  min-height: calc(48 * var(--u)); padding: calc(8.75 * var(--u)) calc(0.625 * var(--u));
+  /* Desktop: fill the screen down to 20px above the bottom of the viewport
+     (header 5.075 + hero top padding 2.1875 = 7.2625). min-height so it can
+     still grow if the content needs more room on very short screens. */
+  min-height: calc(100vh - calc(7.2625 * var(--u)) - 20px);
+  min-height: calc(100svh - calc(7.2625 * var(--u)) - 20px);
+  padding: calc(2.5 * var(--u)) calc(0.625 * var(--u));
   display: flex; align-items: center; justify-content: center;
   background: var(--c-ink);
 }
