@@ -1,4 +1,5 @@
-/* SDMG homepage — work filter, contact steps, lightbox (video or image slider) */
+/* SDMG homepage — work filter, contact steps, lightbox (video or image slider),
+   What we make hover, Osmo marquees */
 (function () {
   'use strict';
 
@@ -127,3 +128,149 @@
     if (slides.length > 1 && e.key === 'ArrowRight') next.click();
   });
 })();
+
+/* ---------- What we make ----------
+   Video Production starts active (image showing, intro copy on the left).
+   Once someone hovers, focuses or taps a service, its image fades in and its
+   description staggers in word by word behind the outgoing copy. */
+(function () {
+  'use strict';
+  var wrap = document.querySelector('[data-make]');
+  if (!wrap) return;
+  var items = wrap.querySelectorAll('[data-make-item]');
+  var imgs = wrap.querySelectorAll('[data-make-img]');
+  var texts = document.querySelectorAll('[data-make-text]');
+  var esc = function (w) { return w.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+
+  texts.forEach(function (p) {
+    p.innerHTML = p.textContent.trim().split(/\s+/).map(function (w, i) {
+      return '<span class="make__word"><span class="make__word-i" style="--i:' + i + '">' + esc(w) + '</span></span>';
+    }).join(' ');
+  });
+
+  var currentText = 'intro', currentItem = 'video';
+  function show(key) {
+    if (key !== currentItem) {
+      currentItem = key;
+      items.forEach(function (b) {
+        var on = b.getAttribute('data-make-item') === key;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      imgs.forEach(function (img) { img.classList.toggle('is-active', img.getAttribute('data-make-img') === key); });
+    }
+    if (key === currentText) return;
+    texts.forEach(function (p) {
+      var k = p.getAttribute('data-make-text');
+      if (k === currentText) {
+        p.classList.remove('is-active');
+        p.classList.add('is-out');
+        clearTimeout(p._outTimer);
+        p._outTimer = setTimeout(function () { p.classList.remove('is-out'); }, 1400);
+      } else if (k === key) {
+        clearTimeout(p._outTimer);
+        p.classList.remove('is-out');
+        p.classList.add('is-active');
+      }
+    });
+    currentText = key;
+  }
+
+  items.forEach(function (b) {
+    var key = b.getAttribute('data-make-item');
+    ['mouseenter', 'focus', 'click'].forEach(function (ev) { b.addEventListener(ev, function () { show(key); }); });
+  });
+})();
+
+/* ---------- Osmo Supply: Marquee with Scroll Direction (as supplied) ---------- */
+function initMarqueeScrollDirection() {
+  document.querySelectorAll('[data-marquee-scroll-direction-target]').forEach((marquee) => {
+    // Query marquee elements
+    const marqueeContent = marquee.querySelector('[data-marquee-collection-target]');
+    const marqueeScroll = marquee.querySelector('[data-marquee-scroll-target]');
+    if (!marqueeContent || !marqueeScroll) return;
+
+    // Get data attributes
+    const { marqueeSpeed: speed, marqueeDirection: direction, marqueeDuplicate: duplicate, marqueeScrollSpeed: scrollSpeed } = marquee.dataset;
+
+    // Convert data attributes to usable types
+    const marqueeSpeedAttr = parseFloat(speed);
+    const marqueeDirectionAttr = direction === 'right' ? 1 : -1; // 1 for right, -1 for left
+    const duplicateAmount = parseInt(duplicate || 0);
+    const scrollSpeedAttr = parseFloat(scrollSpeed);
+    const speedMultiplier = window.innerWidth < 479 ? 0.25 : window.innerWidth < 991 ? 0.5 : 1;
+
+    let marqueeSpeed = marqueeSpeedAttr * (marqueeContent.offsetWidth / window.innerWidth) * speedMultiplier;
+
+    // Precompute styles for the scroll container
+    marqueeScroll.style.marginLeft = `${scrollSpeedAttr * -1}%`;
+    marqueeScroll.style.width = `${(scrollSpeedAttr * 2) + 100}%`;
+
+    // Duplicate marquee content
+    if (duplicateAmount > 0) {
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < duplicateAmount; i++) {
+        fragment.appendChild(marqueeContent.cloneNode(true));
+      }
+      marqueeScroll.appendChild(fragment);
+    }
+
+    // GSAP animation for marquee content
+    const marqueeItems = marquee.querySelectorAll('[data-marquee-collection-target]');
+    const animation = gsap.to(marqueeItems, {
+      xPercent: -100, // Move completely out of view
+      repeat: -1,
+      duration: marqueeSpeed,
+      ease: 'linear'
+    }).totalProgress(0.5);
+
+    // Initialize marquee in the correct direction
+    gsap.set(marqueeItems, { xPercent: marqueeDirectionAttr === 1 ? 100 : -100 });
+    animation.timeScale(marqueeDirectionAttr); // Set correct direction
+    animation.play(); // Start animation immediately
+
+    // Set initial marquee status
+    marquee.setAttribute('data-marquee-status', 'normal');
+
+    // ScrollTrigger logic for direction inversion
+    ScrollTrigger.create({
+      trigger: marquee,
+      start: 'top bottom',
+      end: 'bottom top',
+      onUpdate: (self) => {
+        const isInverted = self.direction === 1; // Scrolling down
+        const currentDirection = isInverted ? -marqueeDirectionAttr : marqueeDirectionAttr;
+
+        // Update animation direction and marquee status
+        animation.timeScale(currentDirection);
+        marquee.setAttribute('data-marquee-status', isInverted ? 'normal' : 'inverted');
+      }
+    });
+
+    // Extra speed effect on scroll
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: marquee,
+        start: '0% 100%',
+        end: '100% 0%',
+        scrub: 0
+      }
+    });
+
+    const scrollStart = marqueeDirectionAttr === -1 ? scrollSpeedAttr : -scrollSpeedAttr;
+    const scrollEnd = -scrollStart;
+
+    tl.fromTo(marqueeScroll, { x: `${scrollStart}vw` }, { x: `${scrollEnd}vw`, ease: 'none' });
+  });
+}
+
+// Initialize Marquee with Scroll Direction
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.gsap || !window.ScrollTrigger) return; // CDN blocked: strips stay static
+  gsap.registerPlugin(ScrollTrigger);
+  initMarqueeScrollDirection();
+  // Duplicated logo/text sets are decorative: hide them from screen readers
+  document.querySelectorAll('[data-marquee-scroll-target]').forEach((scroll) => {
+    Array.from(scroll.children).slice(1).forEach((copy) => copy.setAttribute('aria-hidden', 'true'));
+  });
+});

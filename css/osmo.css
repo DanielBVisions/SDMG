@@ -1,0 +1,173 @@
+/* ==========================================================================
+   Osmo Supply resources (https://osmo.supply/), used as supplied.
+   Site-specific sizing and colour variants live in home.css.
+   ========================================================================== */
+
+/* ------------------------- Marquee with Scroll Direction ------------------------- */
+
+.marquee-advanced__scroll {
+  will-change: transform;
+  width: 100%;
+  display: flex;
+  position: relative;
+}
+
+.marquee-advanced__collection {
+  will-change: transform;
+  display: flex;
+  position: relative;
+}
+
+/* ------------------------- Button 025 ------------------------- */
+
+:root {
+  --button-025-color: #fff;
+  --button-025-color-background: #ff5100;
+  --button-025-hover-color: #fff;
+  --button-025-hover-color-background: #131313;
+  --button-025-hover-border-radius: 2.5em;
+  --button-025-color-focus: #000;
+  --button-025-padding: 0.75em 1em;
+  --button-025-border: 0;
+  --button-025-border-radius: 2.5em;
+  --button-025-focus-inset: -0.125em;
+  --button-025-click-scale: 0.955 0.925;
+  --button-025-ease-click: cubic-bezier(0.4, 0, 0.2, 1);
+  --button-025-ease-hover: cubic-bezier(0.32, 0.72, 0, 1);
+  --button-025-ease-focus: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.button-025 {
+  -webkit-user-select: none;
+  user-select: none;
+  background-color: #0000;
+  outline-style: none;
+  padding: 0;
+  line-height: 1;
+  text-decoration: none;
+  display: inline-grid;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale 0.15s var(--button-025-ease-click);
+}
+
+.button-025::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: var(--button-025-focus-inset);
+  border-radius: var(--button-025-border-radius);
+  transition: box-shadow 0.3s var(--button-025-ease-focus);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.button-025:is(:focus-visible)::after {
+  box-shadow: 0 0 0 0.125em var(--button-025-color-focus);
+}
+
+.button-025:active {
+  scale: var(--button-025-click-scale);
+}
+
+.button-025__inner {
+  pointer-events: none;
+  border-radius: var(--button-025-border-radius);
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  overflow: clip;
+}
+
+.button-025__default {
+  width: 100%;
+  height: 100%;
+  color: var(--button-025-color);
+  grid-area: 1 / 1;
+  display: grid;
+}
+
+.button-025__default-bg {
+  background-color: var(--button-025-color-background);
+  border: var(--button-025-border);
+  border-radius: var(--button-025-border-radius);
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.button-025__default-inner {
+  grid-column-gap: .125em;
+  grid-row-gap: .125em;
+  width: 100%;
+  height: 100%;
+  padding: var(--button-025-padding);
+  grid-area: 1 / 1;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  transition: translate 0.45s var(--button-025-ease-hover), scale 0.45s var(--button-025-ease-hover);
+}
+
+.button-025__hover {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  color: var(--button-025-hover-color);
+  grid-area: 1 / 1;
+  display: grid;
+  translate: calc((100% + 1px) * -1) 0 0;
+  transition: translate 0.45s var(--button-025-ease-hover);
+}
+
+.button-025__hover-bg {
+  background-color: var(--button-025-hover-color-background);
+  border-radius: var(--button-025-hover-border-radius);
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.button-025__hover-inner {
+  grid-column-gap: .125em;
+  grid-row-gap: .125em;
+  width: 100%;
+  height: 100%;
+  padding: var(--button-025-padding);
+  grid-area: 1 / 1;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  translate: -1em 0 0;
+  transition: translate 0.45s var(--button-025-ease-hover);
+}
+
+.button-025__icon {
+  flex: none;
+  width: .75em;
+  height: .75em;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .button-025:is(:hover, :focus-visible) .button-025__default-inner,
+  [data-hover]:is(:hover, :focus-visible) .button-025 .button-025__default-inner {
+    translate: 1em 0 0;
+    scale: 0.85;
+    transition: translate 0.95s var(--button-025-ease-hover), scale 0.95s var(--button-025-ease-hover);
+  }
+
+  .button-025:is(:hover, :focus-visible) .button-025__hover,
+  [data-hover]:is(:hover, :focus-visible) .button-025 .button-025__hover {
+    translate: 0 0 0;
+    transition-delay: 0.05s;
+  }
+
+  .button-025:is(:hover, :focus-visible) .button-025__hover-inner,
+  [data-hover]:is(:hover, :focus-visible) .button-025 .button-025__hover-inner {
+    translate: 0 0 0;
+    transition-delay: 0.065s;
+  }
+}
