@@ -1,0 +1,256 @@
+/* ==========================================================================
+   SDMG — Typography + scaling
+   Type source: Figma file "Untitled", node 4:4758 (h-display … p-small) + p-xlarge from node 7:11540
+
+   How sizing works
+   - html is fixed at 16px, so 1rem = 16px everywhere.
+   - Below 1440px, body font-size scales with the viewport (Osmo system below)
+     and every size is set in em, so the whole type system scales with it.
+   - At 1440px and wider, sizes switch to rem, so they lock at the Figma
+     design values and stop growing.
+   - At exactly 1440px the body size is 16px, so 1em = 1rem and the switch
+     is seamless.
+   - All sizes are written once as plain numbers (Figma px ÷ 16) and
+     multiplied by --u, which is 1em below 1440px and 1rem above.
+
+   Fonts
+   - League Gothic (headings) from Google Fonts, set to 90% width so it
+     matches the measurements of Rama Gothic M in the Figma file.
+     League Gothic has one weight, so headings use 400 (no faux bold).
+   - Manrope (body) from Google Fonts.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=League+Gothic:wdth@75..100&family=Manrope:wght@400;500;600;700&display=swap");
+
+/* ------------------------- Scaling System by Osmo [https://osmo.supply/] -------------------------  */
+
+/* Desktop */
+:root {
+  --size-unit: 16; /* body font-size in design - no px */
+  --size-container-ideal: 1440; /* screen-size in design - no px */
+  --size-container-min: 992px;
+  --size-container-max: 1920px;
+  --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
+  --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
+}
+
+/* Tablet */
+@media screen and (max-width: 991px) {
+  :root {
+    --size-container-ideal: 834; /* screen-size in design - no px */
+    --size-container-min: 768px;
+    --size-container-max: 991px;
+  }
+}
+
+/* Mobile Landscape */
+@media screen and (max-width: 767px) {
+  :root {
+    --size-container-ideal: 550; /* screen-size in design - no px */
+    --size-container-min: 480px;
+    --size-container-max: 767px;
+  }
+}
+
+/* Mobile Portrait */
+@media screen and (max-width: 479px) {
+  :root {
+    --size-container-ideal: 390; /* screen-size in design - no px */
+    --size-container-min: 320px;
+    --size-container-max: 479px;
+  }
+}
+
+/* ------------------------- Root + unit switch ------------------------- */
+
+html { font-size: 16px; }
+
+body { font-size: var(--size-font); }
+
+:root { --u: 1em; }            /* below 1440px: scales with body */
+
+@media screen and (min-width: 1440px) {
+  :root { --u: 1rem; }         /* 1440px and up: fixed to the 16px root */
+  body { font-size: 1rem; }
+}
+
+/* ------------------------- Type tokens -------------------------
+   Sizes are unitless multipliers of --u (Figma px ÷ 16).
+   Line-heights are unitless ratios.
+   Letter-spacing is in em, which is relative to each element's own
+   font-size, so it stays proportional at every breakpoint. */
+
+:root {
+  --font-heading: "League Gothic", "Arial Narrow", sans-serif;
+  --font-heading-stretch: 90%;
+  --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+
+  /* Desktop — exact Figma values */
+  --h-display-size: 11.875;  /* 190px */  --h-display-lh: 0.8;  --h-display-ls: 0.0105em; /* 2px */
+  --h-h1-size: 5;            /* 80px */   --h-h1-lh: 0.9;       --h-h1-ls: 0.025em;       /* 2px */
+  --h-h2-size: 3.125;        /* 50px */   --h-h2-lh: 0.9;       --h-h2-ls: 0;
+  --h-h3-size: 2;            /* 32px */   --h-h3-lh: 1.2;       --h-h3-ls: 0;
+  --h-h4-size: 1.75;         /* 28px */   --h-h4-lh: 1.3;       --h-h4-ls: 0;
+  --h-h5-size: 1.5;          /* 24px */   --h-h5-lh: 1.2;       --h-h5-ls: 0.0833em;      /* 2px */
+  --h-h6-size: 1.25;         /* 20px */   --h-h6-lh: 1.2;       --h-h6-ls: 0.1em;         /* 2px */
+
+  --p-xlarge-size: 1.5;      /* 24px */  --p-xlarge-lh: 1.4;   --p-xlarge-ls: -0.0417em;  /* -1px */
+  --p-large-size: 1.25;      /* 20px */   --p-large-lh: 1.4;    --p-large-ls: -0.05em;    /* -1px */
+  --p-reg-size: 1.125;       /* 18px */   --p-reg-lh: 1.4;      --p-reg-ls: -0.0556em;    /* -1px */
+  --p-small-size: 1;         /* 16px */   --p-small-lh: 1.3;    --p-small-ls: -0.03125em; /* -0.5px */
+}
+
+/* Smaller breakpoints — PROPOSED values.
+   The Figma frame only defines desktop sizes. At the tablet and mobile design
+   widths the body is 16px again, so the desktop multipliers would make the
+   display heading 190px on a 390px phone. These step the large sizes down;
+   replace them with your designer's tablet/mobile sizes when you have them. */
+
+@media screen and (max-width: 991px) {          /* Tablet, designed at 834px */
+  :root {
+    --h-display-size: 7.5;   /* 120px */
+    --h-h1-size: 3.75;       /* 60px */
+    --h-h2-size: 2.75;       /* 44px */
+    --h-h3-size: 1.75;       /* 28px */
+    --h-h4-size: 1.625;      /* 26px */
+    --h-h5-size: 1.375;      /* 22px */
+    --h-h6-size: 1.25;       /* 20px */
+  }
+}
+
+@media screen and (max-width: 767px) {          /* Mobile landscape, designed at 550px */
+  :root {
+    --h-display-size: 5.5;   /* 88px */
+    --h-h1-size: 3.25;       /* 52px */
+    --h-h2-size: 2.5;        /* 40px */
+    --h-h3-size: 1.625;      /* 26px */
+    --h-h4-size: 1.5;        /* 24px */
+    --h-h5-size: 1.3125;     /* 21px */
+    --h-h6-size: 1.125;      /* 18px */
+    --p-large-size: 1.125;   /* 18px */
+    --p-xlarge-size: 1.25;   /* 20px */
+  }
+}
+
+@media screen and (max-width: 479px) {          /* Mobile portrait, designed at 390px */
+  :root {
+    --h-display-size: 4.5;   /* 72px */
+    --h-h1-size: 3;          /* 48px */
+    --h-h2-size: 2.25;       /* 36px */
+    --h-h3-size: 1.625;      /* 26px */
+    --h-h4-size: 1.5;        /* 24px */
+    --h-h5-size: 1.25;       /* 20px */
+    --h-h6-size: 1.125;      /* 18px */
+    --p-large-size: 1.125;   /* 18px */
+    --p-xlarge-size: 1.25;   /* 20px */
+  }
+}
+
+/* ------------------------- Base ------------------------- */
+
+body {
+  font-family: var(--font-body);
+  font-weight: 500;
+  line-height: var(--p-reg-lh);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h-display, .h-h1, .h-h2, .h-h3, .h-h4, .h-h5, .h-h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-stretch: var(--font-heading-stretch);
+  margin: 0;
+}
+
+/* ------------------------- Headings -------------------------
+   Display, H1 and H2 are capitals in the Figma file; H3–H6 are title case. */
+
+.h-display {
+  font-size: calc(var(--h-display-size) * var(--u));
+  line-height: var(--h-display-lh);
+  letter-spacing: var(--h-display-ls);
+  text-transform: uppercase;
+}
+
+h1, .h-h1 {
+  font-size: calc(var(--h-h1-size) * var(--u));
+  line-height: var(--h-h1-lh);
+  letter-spacing: var(--h-h1-ls);
+  text-transform: uppercase;
+}
+
+h2, .h-h2 {
+  font-size: calc(var(--h-h2-size) * var(--u));
+  line-height: var(--h-h2-lh);
+  letter-spacing: var(--h-h2-ls);
+  text-transform: uppercase;
+}
+
+h3, .h-h3 {
+  font-size: calc(var(--h-h3-size) * var(--u));
+  line-height: var(--h-h3-lh);
+  letter-spacing: var(--h-h3-ls);
+}
+
+h4, .h-h4 {
+  font-size: calc(var(--h-h4-size) * var(--u));
+  line-height: var(--h-h4-lh);
+  letter-spacing: var(--h-h4-ls);
+}
+
+h5, .h-h5 {
+  font-size: calc(var(--h-h5-size) * var(--u));
+  line-height: var(--h-h5-lh);
+  letter-spacing: var(--h-h5-ls);
+}
+
+h6, .h-h6 {
+  font-size: calc(var(--h-h6-size) * var(--u));
+  line-height: var(--h-h6-lh);
+  letter-spacing: var(--h-h6-ls);
+}
+
+/* ------------------------- Body ------------------------- */
+
+p { margin: 0; }
+
+p, .p-reg {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: calc(var(--p-reg-size) * var(--u));
+  line-height: var(--p-reg-lh);
+  letter-spacing: var(--p-reg-ls);
+}
+
+.p-xlarge {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: calc(var(--p-xlarge-size) * var(--u));
+  line-height: var(--p-xlarge-lh);
+  letter-spacing: var(--p-xlarge-ls);
+}
+
+.p-large {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: calc(var(--p-large-size) * var(--u));
+  line-height: var(--p-large-lh);
+  letter-spacing: var(--p-large-ls);
+}
+
+.p-small {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: calc(var(--p-small-size) * var(--u));
+  line-height: var(--p-small-lh);
+  letter-spacing: var(--p-small-ls);
+}
+
+/* ------------------------- Note on em -------------------------
+   Below 1440px em is relative to the PARENT's font-size. Keep wrappers
+   (sections, divs, cards) at the body size and put type classes on the
+   text elements themselves, otherwise sizes multiply when nested
+   (e.g. an .h-h3 inside an element that is itself 1.25em). */
