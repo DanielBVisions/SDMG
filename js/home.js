@@ -1,5 +1,5 @@
 /* SDMG homepage — work filter, contact steps, lightbox (video or image slider),
-   What we make hover, Osmo marquees */
+   What we make hover, Osmo marquees, queued reveal, Locomotive smooth scroll + parallax */
 (function () {
   'use strict';
 
@@ -11,6 +11,7 @@
       var f = btn.getAttribute('data-filter');
       filterBtns.forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
       cards.forEach(function (c) { c.hidden = !(f === 'All' || c.getAttribute('data-type') === f); });
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
     });
   });
 
@@ -80,6 +81,7 @@
       prev.hidden = next.hidden = count.hidden = true;
     }
     box.hidden = false;
+    if (window.sdmgScroll) window.sdmgScroll.stop();
     document.body.classList.add('no-scroll');
     closeBtn.focus();
   }
@@ -108,6 +110,7 @@
 
   function close() {
     box.hidden = true;
+    if (window.sdmgScroll) window.sdmgScroll.start();
     media.innerHTML = '';
     document.body.classList.remove('no-scroll');
     if (lastTrigger) lastTrigger.focus();
@@ -273,4 +276,95 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-marquee-scroll-target]').forEach((scroll) => {
     Array.from(scroll.children).slice(1).forEach((copy) => copy.setAttribute('aria-hidden', 'true'));
   });
+});
+
+/* ---------- Osmo Supply: Queued Scroll Reveal ----------
+   As supplied, except a group can set its own reveal offset with
+   [data-queued-reveal-start] (featured cards wait until 85% so they animate in view). */
+function initQueuedScrollReveal() {
+  const queue = [];
+  let isRunning = false;
+
+  document.querySelectorAll('[data-queued-reveal-group]').forEach((group) => {
+    const items = group.hasAttribute('data-queued-reveal-children') ? [...group.children] : [...group.querySelectorAll('[data-queued-reveal-item]')];
+    if (!items.length) return;
+    const start = group.getAttribute('data-queued-reveal-start') || 'top 100%';
+
+    items.forEach((item) => {
+      if (item.getBoundingClientRect().bottom <= 0) return;
+
+      // Set items on load
+      gsap.set(item, {autoAlpha: 0, y: "4em"});
+
+      ScrollTrigger.create({
+        trigger: item,
+        start: start, // Reveal offset
+        once: true,
+        onEnter: () => {
+          queue.push(item);
+          if (queue.length > 12) reveal(queue.shift()); // Max queue length
+
+          if (!isRunning) {
+            isRunning = true;
+            gsap.delayedCall(0.1, revealNext); // Delay
+          }
+        }
+      });
+    });
+  });
+
+  function reveal(item) {
+    gsap.to(item, {autoAlpha: 1, duration: 1.2, ease: 'power1.out', clearProps: "opacity, visibility"});
+    gsap.to(item, {y: "0em", duration: 1.2, ease: 'expo.out', clearProps: "transform"});
+  }
+
+  function revealNext() {
+    const item = queue.shift();
+    if (!item) {isRunning = false; return;}
+
+    // Animate items on scroll
+    reveal(item);
+    gsap.delayedCall(0.075, revealNext); // Stagger
+  }
+}
+
+/* ---------- Section overlap ----------
+   [data-overlap] sections start slightly inset and widen to full width as they
+   scroll up over the section before (rounded top corners stay). */
+function initSectionOverlap() {
+  document.querySelectorAll('[data-overlap]').forEach((section) => {
+    gsap.fromTo(section,
+      { clipPath: 'inset(0% 3% 0% 3% round 2em 2em 0em 0em)' },
+      { clipPath: 'inset(0% 0% 0% 0% round 2em 2em 0em 0em)', ease: 'none',
+        scrollTrigger: { trigger: section, start: 'top bottom', end: 'top 35%', scrub: true } });
+  });
+}
+
+/* ---------- Locomotive Scroll (smooth scroll via Lenis + data-scroll parallax) ---------- */
+function initSmoothScroll() {
+  if (!window.LocomotiveScroll) return;
+  const locomotiveScroll = new LocomotiveScroll({
+    lenisOptions: { lerp: 0.1, duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) }
+  });
+  window.sdmgScroll = locomotiveScroll;
+
+  // In-page links glide too, stopping below the sticky header
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const id = link.getAttribute('href');
+      const target = id === '#' ? null : document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      const header = document.querySelector('.site-header');
+      locomotiveScroll.scrollTo(target, { offset: -(header ? header.offsetHeight : 0) });
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSmoothScroll();
+  if (!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  initQueuedScrollReveal();
+  initSectionOverlap();
 });
