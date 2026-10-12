@@ -103,7 +103,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   display: flex; align-items: center; justify-content: center;
   background: var(--c-ink);
 }
-.hero__media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero__media { position: absolute; left: 0; width: 100%; object-fit: cover; }
+/* Parallax images (Locomotive data-scroll-speed="-0.05") are oversized top and
+   bottom so the frame never shows an edge while they drift. */
+.hero__media, .fcard__img, .wcard__media img, .about__media img { top: calc(-5vh - 5%); height: calc(100% + 10vh + 10%); }
 .hero__card::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.28); }
 .hero__content { position: relative; max-width: 100%; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: calc(2 * var(--u)); text-align: center; color: #fff; }
 .hero__sub { max-width: calc(31.4375 * var(--u)); }
@@ -141,7 +144,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .about { padding-bottom: calc(3.75 * var(--u)); }
 .about__grid { display: flex; gap: calc(1.25 * var(--u)); }
 .about__media { flex: 0 0 calc(46.125 * var(--u)); height: calc(30 * var(--u)); border-radius: calc(1 * var(--u)); overflow: hidden; background: #D9D9D9; }
-.about__media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.about__media { position: relative; }
+.about__media img { position: absolute; left: 0; width: 100%; object-fit: cover; object-position: 50% 30%; }
 .about__body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: calc(2.5 * var(--u)); }
 .about__title { max-width: calc(24.875 * var(--u)); }
 .about__text { max-width: calc(32.5625 * var(--u)); display: flex; flex-direction: column; align-items: flex-start; gap: calc(2 * var(--u)); }
@@ -150,14 +154,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ------------------------- Dark work section ------------------------- */
 .work { background: var(--c-ink); color: #fff; padding: calc(3.75 * var(--u)) 0 calc(7.5 * var(--u)); }
+/* Overlapping sections: each rides up over the one before with rounded top
+   corners; home.js widens it from slightly inset to full width as it scrolls in. */
+[data-overlap] { position: relative; margin-top: calc(-2 * var(--u)); border-radius: calc(2 * var(--u)) calc(2 * var(--u)) 0 0; }
+.work[data-overlap] { z-index: 1; }
+.make-wrap { z-index: 2; background: var(--c-paper); }
 .work__title { text-align: center; }
 .featured { display: flex; flex-direction: column; gap: calc(1.25 * var(--u)); margin-top: calc(3.125 * var(--u)); }
 .fcard {
   position: relative; display: block; width: 100%; height: calc(36.25 * var(--u)); border-radius: calc(1.5 * var(--u)); overflow: hidden;
   text-align: left; color: #fff; background: #222;
 }
-.fcard__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
-.fcard:hover .fcard__img { transform: scale(1.03); }
+.fcard__img { position: absolute; left: 0; width: 100%; object-fit: cover; transition: scale .6s cubic-bezier(.2,.7,.2,1); }
+.fcard:hover .fcard__img { scale: 1.03; }
 .fcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%); }
 .fcard__tags { position: absolute; z-index: 2; top: calc(2 * var(--u)); right: calc(2 * var(--u)); display: flex; gap: calc(0.75 * var(--u)); }
 .fcard__body { position: absolute; z-index: 2; left: calc(3.75 * var(--u)); bottom: calc(2.5 * var(--u)); width: calc(42.375 * var(--u)); max-width: calc(100% - calc(7.5 * var(--u))); display: flex; flex-direction: column; gap: calc(1.25 * var(--u)); }
@@ -176,8 +185,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .wcard { display: flex; flex-direction: column; gap: calc(0.875 * var(--u)); text-align: left; color: #fff; }
 .wcard[hidden] { display: none; }
 .wcard__media { position: relative; height: calc(19.125 * var(--u)); border-radius: calc(0.375 * var(--u)); overflow: hidden; background: #DAD7D0; }
-.wcard__media img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
-.wcard:hover .wcard__media img { transform: scale(1.05); }
+.wcard__media img { position: absolute; left: 0; width: 100%; object-fit: cover; transition: scale .6s cubic-bezier(.2,.7,.2,1); }
+.wcard:hover .wcard__media img { scale: 1.05; }
 .wcard__tag {
   position: absolute; left: calc(0.875 * var(--u)); top: calc(0.875 * var(--u)); background: #0E0E0E; color: var(--c-paper);
   padding: calc(0.4375 * var(--u)) calc(0.75 * var(--u)); border-radius: 999px;
