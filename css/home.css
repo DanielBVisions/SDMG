@@ -149,8 +149,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .about__body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: calc(2.5 * var(--u)); }
 .about__title { max-width: calc(24.875 * var(--u)); }
 .about__text { max-width: calc(32.5625 * var(--u)); display: flex; flex-direction: column; align-items: flex-start; gap: calc(2 * var(--u)); }
-.link-arrow { display: inline-flex; align-items: center; gap: calc(0.75 * var(--u)); border-bottom: 1px solid var(--c-ink); padding-bottom: calc(0.125 * var(--u)); }
-.link-arrow svg { width: calc(1 * var(--u)); height: calc(1 * var(--u)); }
 
 /* ------------------------- Dark work section ------------------------- */
 .work { background: var(--c-ink); color: #fff; padding: calc(3.75 * var(--u)) 0 calc(7.5 * var(--u)); }
