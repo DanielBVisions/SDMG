@@ -42,7 +42,66 @@
   var count = document.getElementById('lightbox-count');
   var countText = document.getElementById('lightbox-count-text');
   var closeBtn = document.getElementById('lightbox-close');
-  var lastTrigger = null, slides = [], index = 0, videoSrc = '';
+  var lastTrigger = null, slides = [], index = 0, videoSrc = '', closing = false;
+  var controls = [closeBtn, playBtn, prev, next, count];
+  var canFly = function () { return !!window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches; };
+
+  /* Where the thumbnail sits on screen right now, its corner radius and image.
+     Card media frames are used (not the oversized parallax image) so the
+     flight starts from exactly what is visible. */
+  function thumbOf(trigger) {
+    var frameEl = trigger.querySelector('.wcard__media') || trigger;
+    var img = trigger.querySelector('img');
+    return {
+      rect: frameEl.getBoundingClientRect(),
+      radius: getComputedStyle(frameEl).borderRadius,
+      src: img ? img.currentSrc || img.src : trigger.getAttribute('data-poster') || ''
+    };
+  }
+
+  function flight(src, fromRect, fromRadius) {
+    var el = document.createElement('img');
+    el.className = 'lightbox-flight'; el.src = src; el.alt = '';
+    el.style.cssText = 'left:' + fromRect.left + 'px;top:' + fromRect.top + 'px;width:' + fromRect.width + 'px;height:' + fromRect.height + 'px;border-radius:' + fromRadius;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  /* Open: thumbnail flies to the frame while the blurred overlay fades in;
+     the controls fade in once it lands. */
+  function flyIn(trigger) {
+    var t = thumbOf(trigger);
+    var to = frame.getBoundingClientRect();
+    var el = flight(t.src, t.rect, t.radius);
+    frame.style.visibility = 'hidden';
+    gsap.set(controls, { autoAlpha: 0 });
+    gsap.fromTo(box, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: 'power2.out' });
+    gsap.to(el, {
+      left: to.left, top: to.top, width: to.width, height: to.height,
+      borderRadius: getComputedStyle(frame).borderRadius,
+      duration: 0.85, ease: 'expo.inOut',
+      onComplete: function () {
+        frame.style.visibility = '';
+        el.remove();
+        gsap.to(controls, { autoAlpha: 1, duration: 0.4, ease: 'power2.out', stagger: 0.05 });
+      }
+    });
+  }
+
+  /* Close: the reverse, back into the card it came from. */
+  function flyOut(done) {
+    var t = thumbOf(lastTrigger);
+    var from = frame.getBoundingClientRect();
+    var el = flight(t.src, from, getComputedStyle(frame).borderRadius);
+    gsap.to(controls, { autoAlpha: 0, duration: 0.2 });
+    frame.style.visibility = 'hidden';
+    gsap.to(box, { autoAlpha: 0, duration: 0.5, delay: 0.15, ease: 'power2.in' });
+    gsap.to(el, {
+      left: t.rect.left, top: t.rect.top, width: t.rect.width, height: t.rect.height, borderRadius: t.radius,
+      duration: 0.75, ease: 'expo.inOut',
+      onComplete: function () { el.remove(); frame.style.visibility = ''; gsap.set(box, { clearProps: 'opacity,visibility' }); done(); }
+    });
+  }
 
   function embedUrl(src) {
     var yt = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
@@ -83,6 +142,7 @@
     box.hidden = false;
     if (window.sdmgScroll) window.sdmgScroll.stop();
     document.body.classList.add('no-scroll');
+    if (canFly()) flyIn(trigger);
     closeBtn.focus();
   }
 
@@ -109,11 +169,17 @@
   }
 
   function close() {
-    box.hidden = true;
-    if (window.sdmgScroll) window.sdmgScroll.start();
-    media.innerHTML = '';
-    document.body.classList.remove('no-scroll');
-    if (lastTrigger) lastTrigger.focus();
+    if (closing || box.hidden) return;
+    function finish() {
+      closing = false;
+      box.hidden = true;
+      if (window.sdmgScroll) window.sdmgScroll.start();
+      media.innerHTML = '';
+      document.body.classList.remove('no-scroll');
+      if (lastTrigger) lastTrigger.focus({ preventScroll: true });
+    }
+    if (canFly() && lastTrigger) { closing = true; frame.classList.remove('is-playing'); media.innerHTML = ''; flyOut(finish); }
+    else finish();
   }
 
   document.querySelectorAll('[data-lightbox]').forEach(function (t) {
@@ -328,15 +394,48 @@ function initQueuedScrollReveal() {
   }
 }
 
-/* ---------- Section overlap ----------
-   [data-overlap] sections start slightly inset and widen to full width as they
-   scroll up over the section before (rounded top corners stay). */
-function initSectionOverlap() {
-  document.querySelectorAll('[data-overlap]').forEach((section) => {
-    gsap.fromTo(section,
-      { clipPath: 'inset(0% 3% 0% 3% round 2em 2em 0em 0em)' },
-      { clipPath: 'inset(0% 0% 0% 0% round 2em 2em 0em 0em)', ease: 'none',
-        scrollTrigger: { trigger: section, start: 'top bottom', end: 'top 35%', scrub: true } });
+/* ---------- Split headings ----------
+   [data-split-heading] text is split into words, each in its own mask; when the
+   heading scrolls into view the words rise from 100% to 0% in turn. Line breaks
+   are kept, and the highlighted phrase (.hl) moves as one piece. */
+function splitWords(el) {
+  Array.from(el.childNodes).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const frag = document.createDocumentFragment();
+      node.textContent.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+        frag.appendChild(wordMask(document.createTextNode(part)));
+      });
+      node.replaceWith(frag);
+    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'BR') {
+      node.replaceWith(wordMask(node.cloneNode(true)));
+    }
+  });
+}
+
+function wordMask(content) {
+  const mask = document.createElement('span');
+  const inner = document.createElement('span');
+  mask.className = 'split-word';
+  inner.className = 'split-word__i';
+  inner.appendChild(content);
+  mask.appendChild(inner);
+  return mask;
+}
+
+function initSplitHeadings() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('[data-split-heading]').forEach((heading) => {
+    splitWords(heading);
+    const words = heading.querySelectorAll('.split-word__i');
+    gsap.set(words, { yPercent: 100 });
+    ScrollTrigger.create({
+      trigger: heading,
+      start: 'top 90%',
+      once: true,
+      onEnter: () => gsap.to(words, { yPercent: 0, duration: 1.1, ease: 'expo.out', stagger: 0.07 })
+    });
   });
 }
 
@@ -366,5 +465,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!window.gsap || !window.ScrollTrigger) return;
   gsap.registerPlugin(ScrollTrigger);
   initQueuedScrollReveal();
-  initSectionOverlap();
+  initSplitHeadings();
 });

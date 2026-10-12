@@ -154,10 +154,18 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ------------------------- Dark work section ------------------------- */
 .work { background: var(--c-ink); color: #fff; padding: calc(3.75 * var(--u)) 0 calc(7.5 * var(--u)); }
-/* Overlapping sections: each rides up over the one before with rounded top
-   corners; home.js widens it from slightly inset to full width as it scrolls in. */
+/* Overlapping sections: each rides up over the one before with rounded top corners. */
 [data-overlap] { position: relative; margin-top: calc(-2 * var(--u)); border-radius: calc(2 * var(--u)) calc(2 * var(--u)) 0 0; }
 .work[data-overlap] { z-index: 1; }
+
+/* Split headings: each word sits in a mask and slides up from 100% (home.js).
+   Padding on the inner word with matching negative margin on the mask keeps
+   tall glyphs from clipping without changing the line height. */
+.split-word { display: inline-block; overflow: hidden; vertical-align: top; margin: -0.15em 0; }
+.split-word__i { display: inline-block; padding: 0.15em 0; }
+
+/* Lightbox open/close flight: a copy of the thumbnail travels to the frame. */
+.lightbox-flight { position: fixed; z-index: 101; object-fit: cover; pointer-events: none; will-change: left, top, width, height; }
 .make-wrap { z-index: 2; background: var(--c-paper); }
 .work__title { text-align: center; }
 .featured { display: flex; flex-direction: column; gap: calc(1.25 * var(--u)); margin-top: calc(3.125 * var(--u)); }
