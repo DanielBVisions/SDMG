@@ -319,7 +319,7 @@ body.no-scroll { overflow: hidden; }
    Tablet (≤ 991px) — PROPOSED layout, Figma only defines desktop
    ========================================================================== */
 @media screen and (max-width: 991px) {
-  .container { padding: 0 calc(2 * var(--u)); }
+  .container { padding-left: calc(2 * var(--u)); padding-right: calc(2 * var(--u)); }
   .hero__card { min-height: calc(38.75 * var(--u)); padding: calc(6 * var(--u)) calc(1.5 * var(--u)); }
   .about__grid, .make__grid, .brands__grid, .contact__grid { flex-direction: column; }
   .about__media, .make__intro, .brands__title, .contact__left, .contact__card { flex: none; width: 100%; }
@@ -351,7 +351,7 @@ body.no-scroll { overflow: hidden; }
    Mobile (≤ 767px)
    ========================================================================== */
 @media screen and (max-width: 767px) {
-  .container { padding: 0 calc(1.25 * var(--u)); }
+  .container { padding-left: calc(1.25 * var(--u)); padding-right: calc(1.25 * var(--u)); }
   .site-nav__link { display: none; }
   .hero { padding-top: calc(0.75 * var(--u)); }
   .hero__card { min-height: calc(35 * var(--u)); padding: calc(5 * var(--u)) calc(1.25 * var(--u)); }
