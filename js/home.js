@@ -440,20 +440,24 @@ function initSplitHeadings() {
 }
 
 /* ---------- Section overlap ----------
-   While a [data-overlap] section scrolls from the bottom of the screen to the top,
-   the section before it drifts down by up to 35% of the screen height. It moves
-   slower than the page, so the incoming section visibly slides over it. */
+   While a [data-overlap] section scrolls from 75% down the screen to the top, the
+   section before it drifts down by up to 20% of the screen height, so the incoming
+   section slides over it. The section before gets 12vh of extra bottom space
+   (html.has-overlap in home.css), which is covered first, so its buttons and text
+   stay clear until they are near the top of the screen. */
 function initSectionOverlap() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.classList.add('has-overlap');
   document.querySelectorAll('[data-overlap]').forEach((section) => {
     const prev = section.previousElementSibling;
     if (!prev) return;
     gsap.fromTo(prev, { y: 0 }, {
-      y: () => window.innerHeight * 0.35,
+      y: () => window.innerHeight * 0.2,
       ease: 'none',
-      scrollTrigger: { trigger: section, start: 'top bottom', end: 'top top', scrub: true, invalidateOnRefresh: true }
+      scrollTrigger: { trigger: section, start: 'top 75%', end: 'top top', scrub: true, invalidateOnRefresh: true }
     });
   });
+  ScrollTrigger.refresh();
 }
 
 /* ---------- Locomotive Scroll (smooth scroll via Lenis + data-scroll parallax) ---------- */
