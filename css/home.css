@@ -155,6 +155,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* Overlapping sections: the section before scrolls up slower (home.js), so each
    [data-overlap] section slides over it. Stacked above it, full width, square. */
 [data-overlap] { position: relative; }
+/* Room for the slide-over to cover before it reaches any content (only when it runs). */
+html.has-overlap .about { padding-bottom: calc(calc(3.75 * var(--u)) + 12vh); }
+html.has-overlap .work { padding-bottom: calc(calc(7.5 * var(--u)) + 12vh); }
 .work[data-overlap] { z-index: 1; }
 
 /* Split headings: each word sits in a mask and slides up from 100% (home.js).
