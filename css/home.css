@@ -92,7 +92,11 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .hero__actions { display: flex; gap: calc(1.25 * var(--u)); flex-wrap: wrap; justify-content: center; }
 
 /* ------------------------- Rotated strips ------------------------- */
-.strip { position: relative; overflow: hidden; padding: calc(2.5 * var(--u)) 0; margin: calc(-1.25 * var(--u)) 0; pointer-events: none; }
+/* Padding grows with the viewport so the rotated band never touches the
+   sections above/below (its ends rise and fall by ~2% of the screen width). */
+.strip { position: relative; overflow: hidden; padding: calc(calc(2 * var(--u)) + 2vw) 0; pointer-events: none; }
+/* Split background so the contact band always sits half on paper, half on orange — no gap at either end. */
+.strip--contact { z-index: 2; background: linear-gradient(180deg, var(--c-paper) 50%, var(--c-orange) 50%); }
 .strip__band {
   display: flex; align-items: center; gap: calc(2.5 * var(--u)); padding: calc(1 * var(--u)) 0;
   width: 112%; margin-left: -6%; background: var(--c-ink); color: #fff;
@@ -106,7 +110,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .strip__text { flex: none; }
 
 /* ------------------------- Intro statement ------------------------- */
-.intro { padding-top: calc(2.5 * var(--u)); padding-bottom: calc(3.75 * var(--u)); }
+.intro { padding-top: calc(3 * var(--u)); padding-bottom: calc(8.75 * var(--u)); }
 .intro__title { max-width: calc(66.4375 * var(--u)); }
 .hl { display: inline-block; line-height: 0.86; padding: 0.06em 0.18em 0 0.1em; background: var(--c-orange); border-radius: 0 0.42em 0.42em 0; }
 
@@ -172,7 +176,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .make__img img { width: 100%; height: 100%; object-fit: cover; }
 
 /* ------------------------- Brands ------------------------- */
-.brands { padding-bottom: calc(7.5 * var(--u)); }
+.brands { padding-bottom: calc(3.75 * var(--u)); }
 .brands__rule { border: 0; border-top: 1px solid rgba(17, 17, 17, 0.2); margin: 0 0 calc(5.625 * var(--u)); }
 .brands__grid { display: flex; gap: calc(1.25 * var(--u)); }
 .brands__title { flex: 0 0 calc(32.625 * var(--u)); }
@@ -183,7 +187,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .brands__logos img { width: auto; opacity: 0.6; }
 
 /* ------------------------- Contact ------------------------- */
-.contact { position: relative; z-index: 0; overflow: hidden; background: var(--c-orange); padding: calc(10.625 * var(--u)) 0 calc(9.1875 * var(--u)); margin-top: calc(-3.75 * var(--u)); }
+.contact { position: relative; z-index: 0; overflow: hidden; background: var(--c-orange); padding: calc(7.5 * var(--u)) 0 calc(9.1875 * var(--u)); }
 .contact__shape { position: absolute; z-index: -1; opacity: 0.16; pointer-events: none; }
 .contact__shape--g { right: calc(-9.25 * var(--u)); top: calc(-3.9375 * var(--u)); width: calc(34.5625 * var(--u)); height: calc(34.5625 * var(--u)); }
 .contact__shape--m { left: 0; bottom: calc(-15.625 * var(--u)); width: calc(21.25 * var(--u)); height: calc(21.25 * var(--u)); }
@@ -277,6 +281,7 @@ body.no-scroll { overflow: hidden; }
   .more__head { align-items: flex-start; }
   .filters { justify-content: flex-start; }
   .make { padding-top: calc(7.5 * var(--u)); }
+  .intro { padding-bottom: calc(5 * var(--u)); }
   .make__grid { gap: calc(3 * var(--u)); }
   .make__list-wrap { padding-top: 0; min-height: 0; }
   .make__list { width: auto; }
@@ -284,7 +289,7 @@ body.no-scroll { overflow: hidden; }
   .make__img { position: static; margin-top: calc(2 * var(--u)); width: 100%; height: calc(22.5 * var(--u)); }
   .brands__grid { gap: calc(3 * var(--u)); }
   .brands__logos { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: row; row-gap: calc(2.5 * var(--u)); }
-  .contact { padding-top: calc(8.75 * var(--u)); }
+  .contact { padding-top: calc(6 * var(--u)); }
   .contact__card { margin-top: calc(1.5 * var(--u)); padding: calc(2.5 * var(--u)); }
   .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer__bottom { flex-direction: column; }
