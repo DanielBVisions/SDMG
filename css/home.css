@@ -152,8 +152,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ------------------------- Dark work section ------------------------- */
 .work { background: var(--c-ink); color: #fff; padding: calc(3.75 * var(--u)) 0 calc(7.5 * var(--u)); }
-/* Overlapping sections: each rides up over the one before with rounded top corners. */
-[data-overlap] { position: relative; margin-top: calc(-2 * var(--u)); border-radius: calc(2 * var(--u)) calc(2 * var(--u)) 0 0; }
+/* Overlapping sections: the section before scrolls up slower (home.js), so each
+   [data-overlap] section slides over it. Stacked above it, full width, square. */
+[data-overlap] { position: relative; }
 .work[data-overlap] { z-index: 1; }
 
 /* Split headings: each word sits in a mask and slides up from 100% (home.js).
