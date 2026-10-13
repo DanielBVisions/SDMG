@@ -251,6 +251,29 @@
   });
 })();
 
+/* ---------- Nav: hide on scroll down, show on scroll up ----------
+   Always shown near the top of the page. Small movements (under 6px) are
+   ignored so the nav doesn't flicker on tiny scroll jitters. */
+(function () {
+  'use strict';
+  var header = document.querySelector('.site-header');
+  if (!header) return;
+  var lastY = window.scrollY, ticking = false;
+  function update() {
+    ticking = false;
+    var y = window.scrollY;
+    if (document.body.classList.contains('no-scroll')) return; // lightbox open
+    if (y <= header.offsetHeight) header.classList.remove('is-hidden');
+    else if (y > lastY + 6) header.classList.add('is-hidden');
+    else if (y < lastY - 6) header.classList.remove('is-hidden');
+    else return;
+    lastY = y;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+})();
+
 /* ---------- Osmo Supply: Marquee with Scroll Direction (as supplied) ---------- */
 function initMarqueeScrollDirection() {
   document.querySelectorAll('[data-marquee-scroll-direction-target]').forEach((marquee) => {
