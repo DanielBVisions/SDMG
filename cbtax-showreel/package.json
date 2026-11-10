@@ -1,0 +1,25 @@
+{
+  "name": "cbtax-showreel",
+  "version": "1.0.0",
+  "description": "20-second showreel for the CBTax website, designed and built by Visions",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render CBTaxShowreel out/cbtax-showreel.mp4",
+    "lint": "tsc"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.542",
+    "@remotion/fonts": "4.0.542",
+    "@remotion/media": "4.0.542",
+    "@remotion/transitions": "4.0.542",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.542"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}
