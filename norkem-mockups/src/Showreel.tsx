@@ -47,7 +47,14 @@ export const Showreel: React.FC<ShowreelProps> = ({
           })}
         />
         <TransitionSeries.Sequence durationInFrames={sceneFrames}>
-          <OrbitRing {...orbit} background="transparent" />
+          {/* Drifts in during the transition, then turns as soon as it lands; one full turn
+              fits in the rest of the scene. */}
+          <OrbitRing
+            {...orbit}
+            background="transparent"
+            startFrame={transitionFrames}
+            stepFrames={sceneFrames - transitionFrames}
+          />
         </TransitionSeries.Sequence>
       </TransitionSeries>
     </AbsoluteFill>

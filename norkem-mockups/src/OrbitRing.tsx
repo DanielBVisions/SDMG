@@ -21,6 +21,11 @@ export type OrbitRingProps = {
   stiffness: number;
   /** Share of each step covered by a constant drift, so the ring never fully stops. */
   drift: number;
+  /**
+   * Frame the first turn starts on. Before it the ring only drifts slowly (e.g. while a
+   * transition brings the scene in), then turns as soon as it has landed.
+   */
+  startFrame?: number;
   background: string;
 };
 
@@ -61,15 +66,17 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   damping,
   stiffness,
   drift,
+  startFrame = 0,
   background,
 }) => {
-  const frame = useCurrentFrame();
+  const frame = useCurrentFrame() - startFrame;
   const ring = Array.from({ length: repeat }, () => cards).flat();
   const n = ring.length;
   const dir = direction === "left" ? 1 : -1;
   const step = Math.floor(frame / stepFrames);
   const local = (frame - step * stepFrames) / stepFrames;
-  const t = stepCurve(local, damping, stiffness, drift);
+  // Before startFrame: a slow lead-in drift that meets the first turn at the same speed.
+  const t = frame < 0 ? (drift * frame) / stepFrames : stepCurve(local, damping, stiffness, drift);
   const turn = (step + t) * (360 / n) * dir;
 
   const placed = ring
