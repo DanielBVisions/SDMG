@@ -7,7 +7,8 @@ looping 3D "helix deck" mockups at **2400 × 1200**, 30 fps. Each card is a
 | Composition | Motion | Length |
 |---|---|---|
 | `NorkemHelixStepped` | Each card settles face-on, then the deck twists to the next one (storyboard style) | 12 cards × 1.6s = 19.2s |
-| `NorkemHelixContinuous` | Constant, unbroken twist | 12 cards × 1.8s = 21.6s |
+| `NorkemHelixContinuous` | Straight column moving down, twist only, off-white background | 5 frames × 1.8s = 9s |
+| `NorkemOrbit` | Camera inside a ring of 4 frames that orbits around it | 1 full turn = 12s |
 
 Both loop seamlessly: the scroll position runs from card 0 round to card N, so
 the last frame leads straight back into the first.

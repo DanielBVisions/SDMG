@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
-import { DECK_A, DECK_B } from "./cards";
+import { DECK_A, DECK_B, DECK_C } from "./cards";
 import { HelixDeck, HelixDeckProps, helixDuration } from "./HelixDeck";
+import { OrbitRing, OrbitRingProps } from "./OrbitRing";
 
 const FPS = 30;
 const WIDTH = 2400;
@@ -37,6 +38,15 @@ const continuous: HelixDeckProps = {
   cardShadow: "0 24px 70px rgba(42,2,2,0.22), 0 4px 14px rgba(42,2,2,0.12)",
 };
 
+const orbit: OrbitRingProps = {
+  cards: DECK_C,
+  radius: 880,
+  cameraDistance: 2400,
+  perspective: 2050,
+  direction: "left",
+  background: continuous.background,
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -57,6 +67,15 @@ export const RemotionRoot: React.FC = () => {
         width={WIDTH}
         height={HEIGHT}
         defaultProps={continuous}
+      />
+      <Composition
+        id="NorkemOrbit"
+        component={OrbitRing}
+        durationInFrames={12 * FPS} // one full turn, 3s per frame
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={orbit}
       />
     </>
   );
