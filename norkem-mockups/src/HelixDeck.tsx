@@ -32,6 +32,13 @@ export type HelixDeckProps = {
   background: string;
   /** CSS box-shadow for each card. */
   cardShadow: string;
+  /** Extra px of column drawn above/below the frame (e.g. while a transition slides it). */
+  overscan?: number;
+  /**
+   * From this frame on, only cards that were on screen at this frame are drawn, so the column
+   * ends cleanly (whole cards, nothing new arriving) while a transition carries it away.
+   */
+  endColumnAtFrame?: number;
 };
 
 export const helixDuration = (p: Pick<HelixDeckProps, "cards" | "stepFrames">) =>
@@ -71,11 +78,27 @@ export const HelixDeck: React.FC<HelixDeckProps> = (props) => {
   const sway = Math.sin(phase) * 3 * extraRotation;
   const lean = Math.cos(phase) * 4 * extraRotation;
 
-  const reach = height / 2 / pitch + 1;
+  const overscan = props.overscan ?? 0;
+  const reach = (height / 2 + overscan) / pitch + 1;
+
+  // Cards that overlap the frame at the column's end frame (see endColumnAtFrame).
+  const endFrame = props.endColumnAtFrame;
+  const keep =
+    endFrame !== undefined && frame >= endFrame
+      ? new Set(
+          cards
+            .map((_, i) => i)
+            .filter((i) => {
+              const p = wrap(i - scrollAt(endFrame, props), n);
+              return Math.abs(p) * pitch < (height + CARD_HEIGHT * cardScale) / 2;
+            }),
+        )
+      : null;
 
   const visible = cards
     .map((card, i) => ({ card, i, p: wrap(i - scroll, n) }))
     .filter(({ p }) => Math.abs(p) < reach)
+    .filter(({ i }) => !keep || keep.has(i))
     // paint far cards first so the face-on card always sits on top
     .sort((a, b) => Math.abs(b.p) - Math.abs(a.p));
 
@@ -86,7 +109,7 @@ export const HelixDeck: React.FC<HelixDeckProps> = (props) => {
         // With extra rotation off, each card gets its own perspective (below) so it
         // only twists on its own axis instead of shearing toward a shared vanishing point.
         perspective: flat ? undefined : props.perspective,
-        overflow: "hidden",
+        overflow: overscan > 0 ? "visible" : "hidden",
       }}
     >
       <div

@@ -53,13 +53,13 @@ const orbit: OrbitRingProps = {
   background: continuous.background,
 };
 
-// Test showreel: helix (2.5s) -> push-down transition (0.7s) -> orbit (2.5s).
+// Test showreel: helix (2.8s) -> push-down transition (1.2s) -> orbit (2.8s).
 const showreel: ShowreelProps = {
   helix: continuous,
   orbit,
   background: continuous.background,
-  sceneFrames: 75, // 2.5s each, including the overlap
-  transitionFrames: 21, // 0.7s
+  sceneFrames: 84, // 2.8s each, including the overlap
+  transitionFrames: 36, // 1.2s
 };
 
 export const RemotionRoot: React.FC = () => {
