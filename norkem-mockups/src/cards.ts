@@ -34,21 +34,11 @@ export const DECK_A: CardDef[] = [
   { kind: "screen", src: "screens/homepage-5680.jpg" },
 ];
 
-// Screens only, for the continuous version.
+// Screens only, for the continuous version (5 frames = 9s loop).
 export const DECK_B: CardDef[] = [
   "homepage-0",
-  "about-0",
   "industry-details-720",
-  "homepage-1640",
   "location-details-0",
-  "all-products-640",
   "product-details-0",
-  "homepage-3640",
-  "blog-article-0",
-  "location-details-2560",
-  "careers-0",
-  "about-2160",
-  "product-details-920",
-  "homepage-5680",
-  "contact-0",
+  "homepage-1640",
 ].map((name) => ({ kind: "screen", src: `screens/${name}.jpg` }));
