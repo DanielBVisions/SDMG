@@ -1,4 +1,11 @@
-import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import {
+  AbsoluteFill,
+  Easing,
+  Img,
+  interpolate,
+  staticFile,
+  useCurrentFrame,
+} from "remotion";
 import { CARD_HEIGHT, CARD_WIDTH, CardDef } from "./cards";
 
 export type OrbitRingProps = {
@@ -13,12 +20,22 @@ export type OrbitRingProps = {
   direction: "left" | "right";
   /** How many times the deck repeats around the ring (more cards = wider, gentler orbit). */
   repeat: number;
+  /** Frames per card: hold + move. */
+  stepFrames: number;
+  /** Frames each card pauses dead centre before the ring moves on. */
+  holdFrames: number;
   background: string;
 };
 
-// The ring turns by one full deck (360 / repeat degrees) over the composition. Because the
-// deck repeats around the ring, that lands every card exactly where the next one started,
-// so the loop is seamless.
+export const orbitDuration = (p: Pick<OrbitRingProps, "cards" | "stepFrames">) =>
+  p.cards.length * p.stepFrames;
+
+const easeOutCubic = Easing.out(Easing.cubic);
+
+// Each step the ring pauses with a card dead centre, then turns one card along with an
+// ease-out-cubic. Over the composition it turns one full deck (360 / repeat degrees); because
+// the deck repeats around the ring, every card lands where the next one started, so the loop
+// is seamless.
 export const OrbitRing: React.FC<OrbitRingProps> = ({
   cards,
   radius,
@@ -26,14 +43,21 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   perspective,
   direction,
   repeat,
+  stepFrames,
+  holdFrames,
   background,
 }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
   const ring = Array.from({ length: repeat }, () => cards).flat();
   const n = ring.length;
   const dir = direction === "left" ? 1 : -1;
-  const turn = (frame / durationInFrames) * (360 / repeat) * dir;
+  const step = Math.floor(frame / stepFrames);
+  const t = interpolate(frame - step * stepFrames, [holdFrames, stepFrames], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: easeOutCubic,
+  });
+  const turn = (step + t) * (360 / n) * dir;
 
   const placed = ring
     .map((card, i) => {
