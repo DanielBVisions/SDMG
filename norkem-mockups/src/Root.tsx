@@ -45,8 +45,10 @@ const orbit: OrbitRingProps = {
   perspective: 1850, // camera pushed in: centre frame ~870px wide
   direction: "left",
   repeat: 3, // the 4 frames repeat 3 times around the ring
-  stepFrames: 45, // 1.5s per frame
-  holdFrames: 21, // 0.7s pause dead centre, then a 0.8s ease-out-cubic move
+  stepFrames: 66, // 2.2s per frame
+  damping: 0.7, // swings ~3.5% past centre, then settles back
+  stiffness: 8.5,
+  drift: 0.03, // slow creep so it never fully stops
   background: continuous.background,
 };
 
@@ -74,7 +76,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="NorkemOrbit"
         component={OrbitRing}
-        durationInFrames={orbitDuration(orbit)} // 4 frames x 1.5s = 6s loop
+        durationInFrames={orbitDuration(orbit)} // 4 frames x 2.2s = 8.8s loop
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}

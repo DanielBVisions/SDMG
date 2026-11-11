@@ -1,11 +1,4 @@
-import {
-  AbsoluteFill,
-  Easing,
-  Img,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-} from "remotion";
+import { AbsoluteFill, Img, staticFile, useCurrentFrame } from "remotion";
 import { CARD_HEIGHT, CARD_WIDTH, CardDef } from "./cards";
 
 export type OrbitRingProps = {
@@ -20,22 +13,43 @@ export type OrbitRingProps = {
   direction: "left" | "right";
   /** How many times the deck repeats around the ring (more cards = wider, gentler orbit). */
   repeat: number;
-  /** Frames per card: hold + move. */
+  /** Frames per card: the turn, the overshoot and the settle at centre. */
   stepFrames: number;
-  /** Frames each card pauses dead centre before the ring moves on. */
-  holdFrames: number;
+  /** Spring damping ratio (0-1). Lower = bigger overshoot. 0.7 ~= 3.5% past centre. */
+  damping: number;
+  /** Spring frequency. Higher = arrives and settles sooner within the step. */
+  stiffness: number;
+  /** Share of each step covered by a constant drift, so the ring never fully stops. */
+  drift: number;
   background: string;
 };
 
 export const orbitDuration = (p: Pick<OrbitRingProps, "cards" | "stepFrames">) =>
   p.cards.length * p.stepFrames;
 
-const easeOutCubic = Easing.out(Easing.cubic);
+// Under-damped spring response from rest: rises smoothly, overshoots, settles back.
+const springAt = (t: number, damping: number, stiffness: number) => {
+  const wd = stiffness * Math.sqrt(1 - damping * damping);
+  return (
+    1 -
+    Math.exp(-damping * stiffness * t) *
+      (Math.cos(wd * t) + ((damping * stiffness) / wd) * Math.sin(wd * t))
+  );
+};
 
-// Each step the ring pauses with a card dead centre, then turns one card along with an
-// ease-out-cubic. Over the composition it turns one full deck (360 / repeat degrees); because
-// the deck repeats around the ring, every card lands where the next one started, so the loop
-// is seamless.
+// 0 -> 1 over a step: spring with a smooth-start time warp (so a turn gathers pace instead
+// of kicking off), normalised to land exactly on 1, plus a constant drift. The drift keeps it
+// moving through centre and matches the speed where one step hands over to the next.
+const stepCurve = (l: number, damping: number, stiffness: number, drift: number) => {
+  const tau = l * l * (2 - l);
+  const s = springAt(tau, damping, stiffness) / springAt(1, damping, stiffness);
+  return (1 - drift) * s + drift * l;
+};
+
+// Each step the ring turns one card along, swings slightly past centre, settles back and
+// drifts on without ever stopping dead. Over the composition it turns one full deck
+// (360 / repeat degrees); because the deck repeats around the ring, every card lands where
+// the next one started, so the loop is seamless.
 export const OrbitRing: React.FC<OrbitRingProps> = ({
   cards,
   radius,
@@ -44,7 +58,9 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   direction,
   repeat,
   stepFrames,
-  holdFrames,
+  damping,
+  stiffness,
+  drift,
   background,
 }) => {
   const frame = useCurrentFrame();
@@ -52,11 +68,8 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   const n = ring.length;
   const dir = direction === "left" ? 1 : -1;
   const step = Math.floor(frame / stepFrames);
-  const t = interpolate(frame - step * stepFrames, [holdFrames, stepFrames], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: easeOutCubic,
-  });
+  const local = (frame - step * stepFrames) / stepFrames;
+  const t = stepCurve(local, damping, stiffness, drift);
   const turn = (step + t) * (360 / n) * dir;
 
   const placed = ring
