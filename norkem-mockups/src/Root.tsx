@@ -60,6 +60,8 @@ const showreel: ShowreelProps = {
   background: continuous.background,
   sceneFrames: 84, // 2.8s each, including the overlap
   transitionFrames: 36, // 1.2s
+  blurSamples: 24, // camera motion blur (enough samples for a smooth streak)
+  shutterAngle: 180,
 };
 
 export const RemotionRoot: React.FC = () => {
