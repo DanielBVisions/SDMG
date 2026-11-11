@@ -1,5 +1,5 @@
 import { loadFont } from "@remotion/fonts";
-import { staticFile } from "remotion";
+import { Easing, staticFile } from "remotion";
 
 // CBTax uses Urbane (Adobe Fonts). Urbanist is the closest free match.
 // Bundled locally (variable font, latin subset) so renders don't depend on Google Fonts.
@@ -15,27 +15,32 @@ loadFont({
 export const colors = {
   ink: "#1D1D20",
   orange: "#E58A57",
-  blue: "#2A64F6",
   lavender: "#C7CCF5",
   peach: "#F4D9CB",
   white: "#FFFFFF",
-  grey: "#8E8E8F",
 };
 
 export const FPS = 30;
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
 
-// Scene lengths in frames. Transitions overlap neighbouring scenes by TRANSITION frames.
-export const TRANSITION = 12;
+// Shared easing: fast start, long soft settle (Apple-style).
+export const smooth = Easing.bezier(0.16, 1, 0.3, 1);
+export const inOut = Easing.bezier(0.65, 0, 0.35, 1);
+export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+
+// Scene lengths in frames. Neighbouring scenes overlap by TRANSITION frames.
+export const TRANSITION = 24;
 export const SCENES = {
-  intro: 75,
-  redesign: 120,
-  interactions: 120,
-  mobile: 120,
-  localisation: 105,
-  outro: 120,
+  intro: 80,
+  hero: 140,
+  scroll: 150,
+  mobile: 140,
+  localisation: 120,
+  outro: 90,
 };
-export const TOTAL =
-  Object.values(SCENES).reduce((a, b) => a + b, 0) -
-  TRANSITION * (Object.keys(SCENES).length - 1);
+
+const order = Object.values(SCENES);
+// Global frame where each scene starts, e.g. START[2] is the scroll scene.
+export const START = order.map((_, i) => order.slice(0, i).reduce((a, b) => a + b - TRANSITION, 0));
+export const TOTAL = order.reduce((a, b) => a + b, 0) - TRANSITION * (order.length - 1);

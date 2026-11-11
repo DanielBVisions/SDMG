@@ -1,41 +1,46 @@
 import { linearTiming, TransitionSeries } from "@remotion/transitions";
-import { fade } from "@remotion/transitions/fade";
-import { slide } from "@remotion/transitions/slide";
-import { Interactions } from "./scenes/Interactions";
+import { AbsoluteFill } from "remotion";
+import { Stage } from "./components/Stage";
+import { Hero } from "./scenes/Hero";
 import { Intro } from "./scenes/Intro";
 import { Localisation } from "./scenes/Localisation";
 import { Mobile } from "./scenes/Mobile";
 import { Outro } from "./scenes/Outro";
-import { Redesign } from "./scenes/Redesign";
-import { TRANSITION } from "./theme";
+import { Scroll } from "./scenes/Scroll";
+import { inOut, TRANSITION } from "./theme";
+import { zoomBlur } from "./transitions/zoomBlur";
 
-const timing = linearTiming({ durationInFrames: TRANSITION });
+const timing = linearTiming({ durationInFrames: TRANSITION, easing: inOut });
 
-// 20 s total: scene lengths add to 660 frames, minus 5 x 12 frames of transition overlap = 600.
+// 20 s, no text. Scene lengths add to 720 frames, minus 5 x 24 frames of overlap = 600.
+// The Stage background runs underneath the whole reel so only the devices transition.
 export const Showreel: React.FC = () => (
-  <TransitionSeries>
-    <TransitionSeries.Sequence name="Intro" durationInFrames={75}>
-      <Intro />
-    </TransitionSeries.Sequence>
-    <TransitionSeries.Transition presentation={fade()} timing={timing} />
-    <TransitionSeries.Sequence name="01 Redesign" durationInFrames={120}>
-      <Redesign />
-    </TransitionSeries.Sequence>
-    <TransitionSeries.Transition presentation={slide({ direction: "from-bottom" })} timing={timing} />
-    <TransitionSeries.Sequence name="02 Interactions" durationInFrames={120}>
-      <Interactions />
-    </TransitionSeries.Sequence>
-    <TransitionSeries.Transition presentation={slide({ direction: "from-bottom" })} timing={timing} />
-    <TransitionSeries.Sequence name="03 Mobile" durationInFrames={120}>
-      <Mobile />
-    </TransitionSeries.Sequence>
-    <TransitionSeries.Transition presentation={slide({ direction: "from-right" })} timing={timing} />
-    <TransitionSeries.Sequence name="04 Localisation" durationInFrames={105}>
-      <Localisation />
-    </TransitionSeries.Sequence>
-    <TransitionSeries.Transition presentation={fade()} timing={timing} />
-    <TransitionSeries.Sequence name="Outro" durationInFrames={120}>
-      <Outro />
-    </TransitionSeries.Sequence>
-  </TransitionSeries>
+  <AbsoluteFill>
+    <Stage />
+    <TransitionSeries>
+      <TransitionSeries.Sequence name="Intro" durationInFrames={80}>
+        <Intro />
+      </TransitionSeries.Sequence>
+      <TransitionSeries.Transition presentation={zoomBlur()} timing={timing} />
+      <TransitionSeries.Sequence name="Hero" durationInFrames={140}>
+        <Hero />
+      </TransitionSeries.Sequence>
+      <TransitionSeries.Transition presentation={zoomBlur()} timing={timing} />
+      <TransitionSeries.Sequence name="Scroll" durationInFrames={150}>
+        <Scroll />
+      </TransitionSeries.Sequence>
+      <TransitionSeries.Transition presentation={zoomBlur()} timing={timing} />
+      <TransitionSeries.Sequence name="Mobile" durationInFrames={140}>
+        <Mobile />
+      </TransitionSeries.Sequence>
+      <TransitionSeries.Transition presentation={zoomBlur()} timing={timing} />
+      <TransitionSeries.Sequence name="Localisation" durationInFrames={120}>
+        <Localisation />
+      </TransitionSeries.Sequence>
+      <TransitionSeries.Transition presentation={zoomBlur()} timing={timing} />
+      <TransitionSeries.Sequence name="Outro" durationInFrames={90}>
+        <Outro />
+      </TransitionSeries.Sequence>
+    </TransitionSeries>
+  </AbsoluteFill>
 );

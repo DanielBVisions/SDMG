@@ -1,56 +1,50 @@
-import { AbsoluteFill, Easing, Img, Interactive, interpolate, staticFile, useCurrentFrame } from "remotion";
-import { Backdrop } from "../components/Backdrop";
-import { Accent, FeatureCaption } from "../components/FeatureCaption";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { PhoneFrame } from "../components/PhoneFrame";
-import { fontFamily } from "../theme";
+import { clamp } from "../theme";
 
-const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const PHONE_W = 330;
-
 const phones = [
-  { src: "shots/m-hero.jpg", delay: 0, lift: 40 },
-  { src: "shots/m-quote-orange.jpg", delay: 7, lift: -30 },
-  { src: "shots/m-sectors.jpg", delay: 14, lift: 60 },
+  { src: "shots/m-quote-blue.jpg", lift: 70 },
+  { src: "shots/m-hero.jpg", lift: -20 },
+  { src: "shots/m-quote-orange.jpg", lift: 40 },
+  { src: "shots/m-sectors.jpg", lift: -50 },
 ];
 
-// 03: the same experience, fully intact on mobile.
+// Row of phones rising in a wave, angled in 3D, drifting sideways like a carousel.
 export const Mobile: React.FC = () => {
   const frame = useCurrentFrame();
+  const rise = Easing.bezier(0.22, 1, 0.36, 1);
+  const driftX = interpolate(frame, [0, 140], [140, -140], clamp);
   return (
-    <AbsoluteFill name="Mobile" style={{ fontFamily }}>
-      <Backdrop />
-      <FeatureCaption
-        index="03  MOBILE RESPONSIVE"
-        title={
-          <>
-            Flawless on
-            <br />
-            <Accent>every device</Accent>
-          </>
-        }
-        detail="Four countries, many time zones. Bold visuals and smooth motion stay intact."
-        style={{ position: "absolute", left: 110, top: 300, width: 620 }}
-      />
-      <div style={{ position: "absolute", right: 110, top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 44 }}>
-        {phones.map((p, i) => (
-          <Interactive.Div
-            key={p.src}
-            name={`Phone ${i + 1}`}
-            style={{
-              opacity: interpolate(frame, [p.delay, p.delay + 12], [0, 1], clamp),
-              translate: interpolate(
-                frame,
-                [p.delay, p.delay + 34, 120],
-                ["0px 500px", `0px ${p.lift}px`, `0px ${p.lift - 30}px`],
-                { ...clamp, easing: [Easing.spring({ damping: 18, mass: 0.8 }), Easing.linear] },
-              ),
-            }}
-          >
-            <PhoneFrame width={PHONE_W}>
-              <Img src={staticFile(p.src)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            </PhoneFrame>
-          </Interactive.Div>
-        ))}
+    <AbsoluteFill name="Mobile" style={{ justifyContent: "center", alignItems: "center", perspective: 2200 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 60,
+          alignItems: "center",
+          transform: `translateX(${driftX}px) rotateY(${interpolate(frame, [0, 140], [-14, -6], clamp)}deg) rotateX(6deg)`,
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {phones.map((p, i) => {
+          const d = i * 6;
+          return (
+            <div
+              key={p.src}
+              style={{
+                opacity: interpolate(frame, [d, d + 14], [0, 1], clamp),
+                transform: `translateY(${interpolate(frame, [d, d + 45, 140], [640, p.lift, p.lift - 36], {
+                  ...clamp,
+                  easing: [rise, Easing.linear],
+                })}px) rotateZ(${interpolate(frame, [d, d + 45], [6, 0], { ...clamp, easing: rise })}deg)`,
+              }}
+            >
+              <PhoneFrame width={PHONE_W}>
+                <Img src={staticFile(p.src)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </PhoneFrame>
+            </div>
+          );
+        })}
       </div>
     </AbsoluteFill>
   );
