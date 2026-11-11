@@ -18,11 +18,20 @@ export type HelixDeckProps = {
   stepFrames: number;
   /** Stepped only: frames each card holds face-on before moving on. */
   holdFrames: number;
-  /** Degrees of twist between neighbouring cards. */
+  /** Degrees of twist (around the vertical axis) between neighbouring cards. */
   twist: number;
-  /** Vertical distance between card centres, in px. */
+  /** Vertical distance between card centres, in px (after scaling). */
   pitch: number;
+  /** Card size multiplier; 1 = 1440x850. Keeps the aspect ratio. */
+  cardScale: number;
+  /** "up" = deck travels upward, "down" = deck travels downward. */
+  direction: "up" | "down";
+  /** Extra motion: forward tilt, depth push and whole-column sway. 0 = none. */
+  extraRotation: number;
+  perspective: number;
   background: string;
+  /** CSS box-shadow for each card. */
+  cardShadow: string;
 };
 
 export const helixDuration = (p: Pick<HelixDeckProps, "cards" | "stepFrames">) =>
@@ -50,23 +59,36 @@ const wrap = (v: number, n: number) => ((((v + n / 2) % n) + n) % n) - n / 2;
 export const HelixDeck: React.FC<HelixDeckProps> = (props) => {
   const frame = useCurrentFrame();
   const { durationInFrames, width, height } = useVideoConfig();
-  const { cards, twist, pitch, background } = props;
+  const { cards, twist, pitch, cardScale, direction, extraRotation, background } =
+    props;
   const n = cards.length;
   const scroll = scrollAt(frame, props);
+  const dir = direction === "down" ? -1 : 1;
+  const flat = extraRotation === 0;
 
-  // Slow sway of the whole column; one full sine period per loop so it stays seamless.
+  // Optional slow sway of the whole column; one sine period per loop so it stays seamless.
   const phase = (frame / durationInFrames) * Math.PI * 2;
-  const sway = Math.sin(phase) * 3;
-  const lean = Math.cos(phase) * 4;
+  const sway = Math.sin(phase) * 3 * extraRotation;
+  const lean = Math.cos(phase) * 4 * extraRotation;
+
+  const reach = height / 2 / pitch + 1;
 
   const visible = cards
     .map((card, i) => ({ card, i, p: wrap(i - scroll, n) }))
-    .filter(({ p }) => Math.abs(p) < 2.2)
+    .filter(({ p }) => Math.abs(p) < reach)
     // paint far cards first so the face-on card always sits on top
     .sort((a, b) => Math.abs(b.p) - Math.abs(a.p));
 
   return (
-    <AbsoluteFill style={{ background, perspective: 2600, overflow: "hidden" }}>
+    <AbsoluteFill
+      style={{
+        background,
+        // With extra rotation off, each card gets its own perspective (below) so it
+        // only twists on its own axis instead of shearing toward a shared vanishing point.
+        perspective: flat ? undefined : props.perspective,
+        overflow: "hidden",
+      }}
+    >
       <div
         style={{
           position: "absolute",
@@ -91,12 +113,15 @@ export const HelixDeck: React.FC<HelixDeckProps> = (props) => {
                 overflow: "hidden",
                 backfaceVisibility: "hidden",
                 transform: [
-                  `translateY(${p * pitch}px)`,
-                  `translateZ(${-a * 160}px)`,
+                  `translateY(${dir * p * pitch}px)`,
+                  flat ? `perspective(${props.perspective}px)` : "",
+                  `translateZ(${-a * 160 * extraRotation}px)`,
                   `rotateY(${p * twist}deg)`,
-                  `rotateX(${-p * 9}deg)`,
+                  `rotateX(${-dir * p * 9 * extraRotation}deg)`,
+                  `scale(${cardScale})`,
                 ].join(" "),
-                boxShadow: "0 40px 120px rgba(0,0,0,0.6)",
+                boxShadow: props.cardShadow,
+                outline: "1px solid rgba(255,255,255,0.06)",
               }}
             >
               {card.kind === "screen" ? (

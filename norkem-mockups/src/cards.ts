@@ -34,18 +34,21 @@ export const DECK_A: CardDef[] = [
   { kind: "screen", src: "screens/homepage-5680.jpg" },
 ];
 
-// A second, screen-heavy order for the continuous version.
+// Screens only, for the continuous version.
 export const DECK_B: CardDef[] = [
-  { kind: "screen", src: "screens/homepage-3640.jpg" },
-  { kind: "screen", src: "screens/about-0.jpg" },
-  { kind: "brand", variant: "mark" },
-  { kind: "screen", src: "screens/industry-details-720.jpg" },
-  { kind: "screen", src: "screens/location-details-0.jpg" },
-  { kind: "brand", variant: "logo" },
-  { kind: "screen", src: "screens/all-products-640.jpg" },
-  { kind: "screen", src: "screens/product-details-920.jpg" },
-  { kind: "brand", variant: "tagline" },
-  { kind: "screen", src: "screens/blog-article-0.jpg" },
-  { kind: "screen", src: "screens/about-4760.jpg" },
-  { kind: "screen", src: "screens/contact-0.jpg" },
-];
+  "homepage-0",
+  "about-0",
+  "industry-details-720",
+  "homepage-1640",
+  "location-details-0",
+  "all-products-640",
+  "product-details-0",
+  "homepage-3640",
+  "blog-article-0",
+  "location-details-2560",
+  "careers-0",
+  "about-2160",
+  "product-details-920",
+  "homepage-5680",
+  "contact-0",
+].map((name) => ({ kind: "screen", src: `screens/${name}.jpg` }));
