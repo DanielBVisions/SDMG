@@ -73,9 +73,10 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   const ring = Array.from({ length: repeat }, () => cards).flat();
   const n = ring.length;
   const dir = direction === "left" ? 1 : -1;
-  const step = Math.floor(frame / stepFrames);
+  // Before startFrame: a slow lead-in drift that meets the first turn at the same speed and
+  // the same position (step 0), so nothing jumps when the turn begins.
+  const step = Math.max(0, Math.floor(frame / stepFrames));
   const local = (frame - step * stepFrames) / stepFrames;
-  // Before startFrame: a slow lead-in drift that meets the first turn at the same speed.
   const t = frame < 0 ? (drift * frame) / stepFrames : stepCurve(local, damping, stiffness, drift);
   const turn = (step + t) * (360 / n) * dir;
 
