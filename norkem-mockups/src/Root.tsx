@@ -2,6 +2,7 @@ import { Composition } from "remotion";
 import { DECK_A, DECK_B, DECK_C } from "./cards";
 import { HelixDeck, HelixDeckProps, helixDuration } from "./HelixDeck";
 import { OrbitRing, OrbitRingProps, orbitDuration } from "./OrbitRing";
+import { Showreel, ShowreelProps, showreelDuration } from "./Showreel";
 
 const FPS = 30;
 const WIDTH = 2400;
@@ -52,6 +53,15 @@ const orbit: OrbitRingProps = {
   background: continuous.background,
 };
 
+// Test showreel: helix (2.5s) -> push-down transition (0.7s) -> orbit (2.5s).
+const showreel: ShowreelProps = {
+  helix: continuous,
+  orbit,
+  background: continuous.background,
+  sceneFrames: 75, // 2.5s each, including the overlap
+  transitionFrames: 21, // 0.7s
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -81,6 +91,15 @@ export const RemotionRoot: React.FC = () => {
         width={WIDTH}
         height={HEIGHT}
         defaultProps={orbit}
+      />
+      <Composition
+        id="NorkemShowreel"
+        component={Showreel}
+        durationInFrames={showreelDuration(showreel)}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={showreel}
       />
     </>
   );
