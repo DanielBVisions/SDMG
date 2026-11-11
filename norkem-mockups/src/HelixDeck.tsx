@@ -94,8 +94,9 @@ export const HelixDeck: React.FC<HelixDeckProps> = (props) => {
           position: "absolute",
           left: width / 2,
           top: height / 2,
-          transformStyle: "preserve-3d",
-          transform: `rotateZ(${sway}deg) rotateY(${lean}deg)`,
+          // Flat mode: each card is its own 3D layer, so cards never depth-clip each other.
+          transformStyle: flat ? "flat" : "preserve-3d",
+          transform: flat ? undefined : `rotateZ(${sway}deg) rotateY(${lean}deg)`,
         }}
       >
         {visible.map(({ card, i, p }) => {

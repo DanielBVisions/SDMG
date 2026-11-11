@@ -26,7 +26,7 @@ const continuous: HelixDeckProps = {
   motion: "continuous",
   stepFrames: 54, // 1.8s per card, constant speed
   holdFrames: 0,
-  twist: 58,
+  twist: 40,
   pitch: 630, // card is 510px tall at 0.6 scale, leaving a clear gap
   cardScale: 0.6, // 864x510, same 1440:850 ratio
   direction: "down",
