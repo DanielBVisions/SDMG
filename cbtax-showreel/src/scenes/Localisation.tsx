@@ -3,20 +3,29 @@ import { BrowserFrame } from "../components/BrowserFrame";
 import { clamp } from "../theme";
 
 const W = 1180;
-const markets = ["shots/loc-uk.jpg", "shots/loc-ie.jpg", "shots/loc-us.jpg", "shots/loc-ae.jpg"];
+// Five distinct pages, alternating light and dark.
+const pages = [
+  "shots/pg-sectors.jpg",
+  "shots/pg-team.jpg",
+  "shots/pg-locations.jpg",
+  "shots/pg-insights.jpg",
+  "shots/pg-rd-services.jpg",
+];
 
-// Cover-flow of the UK, Ireland, USA and UAE versions; the camera glides from one to the next.
+// Cover-flow through the wider site; the camera glides from one page to the next.
 export const Localisation: React.FC = () => {
   const frame = useCurrentFrame();
   const glide = Easing.bezier(0.65, 0, 0.35, 1);
-  // Position along the carousel: rests on each market, glides between them.
-  const t = interpolate(frame, [0, 18, 40, 50, 72, 82, 104, 120], [-0.15, 0, 1, 1, 2, 2, 3, 3.1], {
-    ...clamp,
-    easing: glide,
-  });
+  // Position along the carousel: brief rest on each page, glide between them.
+  const t = interpolate(
+    frame,
+    [0, 12, 30, 36, 54, 60, 78, 84, 102, 120],
+    [-0.15, 0, 1, 1, 2, 2, 3, 3, 4, 4.1],
+    { ...clamp, easing: glide },
+  );
   return (
     <AbsoluteFill name="Localisation" style={{ justifyContent: "center", alignItems: "center", perspective: 2400 }}>
-      {markets.map((src, i) => {
+      {pages.map((src, i) => {
         const d = i - t;
         const a = Math.abs(d);
         return (

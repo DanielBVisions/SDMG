@@ -1,13 +1,13 @@
 import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { PhoneFrame } from "../components/PhoneFrame";
-import { clamp } from "../theme";
+import { clamp, colors } from "../theme";
 
-const PHONE_W = 330;
+const PHONE_W = 330; // ~730px tall at 19.5:9
 const phones = [
-  { src: "shots/m-quote-blue.jpg", lift: 70 },
-  { src: "shots/m-hero.jpg", lift: -20 },
-  { src: "shots/m-quote-orange.jpg", lift: 40 },
-  { src: "shots/m-sectors.jpg", lift: -50 },
+  { src: "shots/m-quote-blue.jpg", lift: 50, bar: colors.ink },
+  { src: "shots/m-hero.jpg", lift: -20, bar: colors.white },
+  { src: "shots/m-quote-orange.jpg", lift: 35, bar: colors.ink },
+  { src: "shots/m-sectors.jpg", lift: -40, bar: colors.white },
 ];
 
 // Row of phones rising in a wave, angled in 3D, drifting sideways like a carousel.
@@ -39,8 +39,8 @@ export const Mobile: React.FC = () => {
                 })}px) rotateZ(${interpolate(frame, [d, d + 45], [6, 0], { ...clamp, easing: rise })}deg)`,
               }}
             >
-              <PhoneFrame width={PHONE_W}>
-                <Img src={staticFile(p.src)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <PhoneFrame width={PHONE_W} statusBar={p.bar}>
+                <Img src={staticFile(p.src)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
               </PhoneFrame>
             </div>
           );

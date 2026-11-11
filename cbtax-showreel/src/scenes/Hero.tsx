@@ -30,8 +30,8 @@ export const Hero: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          right: 150,
-          bottom: 60,
+          right: 170,
+          bottom: 40,
           opacity: interpolate(frame, [30, 48], [0, 1], clamp),
           transform: `translateY(${interpolate(frame, [30, 75, 140], [520, 0, -40], {
             ...clamp,
@@ -40,8 +40,8 @@ export const Hero: React.FC = () => {
           filter: `blur(${interpolate(frame, [30, 60], [10, 0], clamp)}px)`,
         }}
       >
-        <PhoneFrame width={300}>
-          <Img src={staticFile("shots/m-hero.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <PhoneFrame width={280}>
+          <Img src={staticFile("shots/m-hero.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
         </PhoneFrame>
       </div>
     </AbsoluteFill>
