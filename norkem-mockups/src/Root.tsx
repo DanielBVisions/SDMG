@@ -40,10 +40,11 @@ const continuous: HelixDeckProps = {
 
 const orbit: OrbitRingProps = {
   cards: DECK_C,
-  radius: 880,
-  cameraDistance: 2400,
-  perspective: 2050,
+  radius: 3070, // wide ring: 12 cards with clear gaps between them
+  cameraDistance: 0, // camera at the ring's centre, so cards slide off the sides
+  perspective: 1386,
   direction: "left",
+  repeat: 3, // the 4 frames repeat 3 times around the ring
   background: continuous.background,
 };
 
@@ -71,7 +72,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="NorkemOrbit"
         component={OrbitRing}
-        durationInFrames={12 * FPS} // one full turn, 3s per frame
+        durationInFrames={12 * FPS} // a third of a turn (one full deck), 3s per frame
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}

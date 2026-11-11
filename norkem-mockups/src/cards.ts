@@ -46,7 +46,7 @@ export const DECK_B: CardDef[] = [
 // Four different screens for the orbit ring.
 export const DECK_C: CardDef[] = [
   "homepage-5680",
-  "about-2160",
+  "about-2117",
   "location-details-802",
   "homepage-3640",
 ].map((name) => ({ kind: "screen", src: `screens/${name}.jpg` }));

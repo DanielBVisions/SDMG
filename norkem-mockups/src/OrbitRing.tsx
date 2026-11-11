@@ -11,25 +11,31 @@ export type OrbitRingProps = {
   perspective: number;
   /** "left" = cards travel right-to-left across the screen. */
   direction: "left" | "right";
+  /** How many times the deck repeats around the ring (more cards = wider, gentler orbit). */
+  repeat: number;
   background: string;
 };
 
-// The ring makes exactly one full turn over the composition, so it loops seamlessly.
+// The ring turns by one full deck (360 / repeat degrees) over the composition. Because the
+// deck repeats around the ring, that lands every card exactly where the next one started,
+// so the loop is seamless.
 export const OrbitRing: React.FC<OrbitRingProps> = ({
   cards,
   radius,
   cameraDistance,
   perspective,
   direction,
+  repeat,
   background,
 }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
-  const n = cards.length;
+  const ring = Array.from({ length: repeat }, () => cards).flat();
+  const n = ring.length;
   const dir = direction === "left" ? 1 : -1;
-  const turn = (frame / durationInFrames) * 360 * dir;
+  const turn = (frame / durationInFrames) * (360 / repeat) * dir;
 
-  const placed = cards
+  const placed = ring
     .map((card, i) => {
       const angle = (i * 360) / n + turn;
       const rad = (angle * Math.PI) / 180;
