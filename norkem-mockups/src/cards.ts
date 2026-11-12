@@ -51,10 +51,9 @@ export const DECK_C: CardDef[] = [
   "homepage-3640",
 ].map((name) => ({ kind: "screen", src: `screens/${name}.jpg` }));
 
-// CBTax test: four viewport captures of cbtax.com (1440x850).
+// CBTax test: three viewport captures of cbtax.com (1440x850).
 export const DECK_CBTAX: CardDef[] = [
   "cbtax-hero",
   "cbtax-sectors",
-  "cbtax-services",
   "cbtax-team",
 ].map((name) => ({ kind: "screen", src: `screens/${name}.jpg` }));

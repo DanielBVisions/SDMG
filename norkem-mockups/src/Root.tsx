@@ -64,10 +64,12 @@ const showreel: ShowreelProps = {
   shutterAngle: 180,
 };
 
-// CBTax test: same orbit, four cbtax.com frames, on #1D1D20.
+// CBTax test: same orbit, three cbtax.com frames, on #1D1D20, at 1920x1080.
 const cbtaxOrbit: OrbitRingProps = {
   ...orbit,
   cards: DECK_CBTAX,
+  repeat: 4, // 3 frames x 4 keeps the same 12-card ring
+  perspective: 1480, // scaled to 1920 wide so frames keep the same proportion of the screen
   background: "#1D1D20",
   cardOutline: "1px solid rgba(255,255,255,0.12)",
 };
@@ -116,8 +118,8 @@ export const RemotionRoot: React.FC = () => {
         component={OrbitRing}
         durationInFrames={orbitDuration(cbtaxOrbit)}
         fps={FPS}
-        width={WIDTH}
-        height={HEIGHT}
+        width={1920}
+        height={1080}
         defaultProps={cbtaxOrbit}
       />
     </>
