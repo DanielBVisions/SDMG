@@ -98,8 +98,8 @@ const cbtaxCarousel: CarouselStackProps = {
   dimColor: "#F6EFED",
   cardShadow: "0 24px 70px rgba(29,29,32,0.16), 0 4px 14px rgba(29,29,32,0.08)",
   gap: 70,
-  stepFrames: 66, // 2.2s per item
-  slowFraction: 0.4, // ~0.9s creeping slowly up through centre, then a ~1.3s move
+  stepFrames: 54, // 1.8s per item
+  slowFraction: 0.25, // ~0.45s creeping slowly up through centre, then a ~1.35s move
   creep: 0.16, // arrives ~15px below centre and drifts ~30px up through it, never stops
   background: continuous.background, // same off-white as the orbit
 };
@@ -164,7 +164,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="CBTaxCarousel"
         component={CarouselStack}
-        durationInFrames={carouselDuration(cbtaxCarousel)} // 3 items x 2.2s = 6.6s loop
+        durationInFrames={carouselDuration(cbtaxCarousel)} // 3 items x 1.8s = 5.4s loop
         fps={FPS}
         width={1920}
         height={1080}
