@@ -2,6 +2,7 @@ import { Composition } from "remotion";
 import { DECK_A, DECK_B, DECK_C, DECK_CBTAX } from "./cards";
 import { HelixDeck, HelixDeckProps, helixDuration } from "./HelixDeck";
 import { OrbitRing, OrbitRingProps, orbitDuration } from "./OrbitRing";
+import { GridMarquee, GridMarqueeProps } from "./GridMarquee";
 import { Showreel, ShowreelProps, showreelDuration } from "./Showreel";
 
 const FPS = 30;
@@ -74,6 +75,19 @@ const cbtaxOrbit: OrbitRingProps = {
   cardOutline: "1px solid rgba(255,255,255,0.12)",
 };
 
+// CBTax grid: tilted grid of screens, rows sliding in alternating directions.
+const cbtaxGrid: GridMarqueeProps = {
+  screens: ["40", "39", "41", "49", "42", "47", "531"].map((f) => `grid/frame-${f}.jpg`),
+  perRow: 4,
+  rows: 7,
+  cardScale: 0.6, // 864x480
+  gap: 56,
+  rotateZ: -28,
+  rotateX: 18,
+  perspective: 3000,
+  background: "#ECECEC",
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -121,6 +135,15 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         defaultProps={cbtaxOrbit}
+      />
+      <Composition
+        id="CBTaxGrid"
+        component={GridMarquee}
+        durationInFrames={12 * FPS} // each row travels one full cycle (4 screens) per 12s loop
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={cbtaxGrid}
       />
     </>
   );
