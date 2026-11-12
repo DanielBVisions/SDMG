@@ -2,6 +2,7 @@ import { Composition } from "remotion";
 import { DECK_A, DECK_B, DECK_C, DECK_CBTAX } from "./cards";
 import { HelixDeck, HelixDeckProps, helixDuration } from "./HelixDeck";
 import { OrbitRing, OrbitRingProps, orbitDuration } from "./OrbitRing";
+import { CarouselStack, CarouselStackProps, carouselDuration } from "./CarouselStack";
 import { GridMarquee, GridMarqueeProps } from "./GridMarquee";
 import { Showreel, ShowreelProps, showreelDuration } from "./Showreel";
 
@@ -88,6 +89,18 @@ const cbtaxGrid: GridMarqueeProps = {
   background: "#ECECEC",
 };
 
+// CBTax carousel: vertical column, each card stops at centre, then moves up again.
+const cbtaxCarousel: CarouselStackProps = {
+  screens: ["40", "41", "49"].map((f) => `grid/frame-${f}.jpg`),
+  cardWidth: 860,
+  sideScale: 0.62,
+  sideDim: 0.55,
+  gap: 70,
+  stepFrames: 60, // 2s per item
+  holdFrames: 27, // 0.9s stopped at centre, then a 1.1s move
+  background: "#1D1D20",
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -144,6 +157,15 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         defaultProps={cbtaxGrid}
+      />
+      <Composition
+        id="CBTaxCarousel"
+        component={CarouselStack}
+        durationInFrames={carouselDuration(cbtaxCarousel)} // 3 items x 2s = 6s loop
+        fps={FPS}
+        width={1080}
+        height={1350}
+        defaultProps={cbtaxCarousel}
       />
     </>
   );
