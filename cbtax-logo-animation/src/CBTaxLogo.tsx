@@ -3,6 +3,7 @@ import {
   Easing,
   Interactive,
   interpolate,
+  interpolateColors,
   spring,
   useCurrentFrame,
   useVideoConfig,
@@ -10,7 +11,7 @@ import {
 
 // Logo artwork (viewBox 1026 x 271) rendered 1200px wide => scale 1.1696.
 // Icon = orange arrowhead (top right). Concept: brand-coloured shapes pop in,
-// drift and spin, then converge and merge into the arrowhead, which settles
+// drift and spin, then fly into place and stretch into the arrowhead segments, which settles
 // beside the wordmark as the letters rise into place.
 
 const C_PATH =
@@ -29,17 +30,63 @@ const ICON_PATH =
 const INK = "#1D1D20";
 const ORANGE = "#E58A57";
 
-const CONVERGE_START = 54;
-const CONVERGE_END = 78;
-const SPREAD = 1.3; // scatter distance multiplier
-const SIZE = 1.35; // shape size multiplier
+const CONVERGE_START = 52;
+const CONVERGE_END = 80;
+const SPREAD = 0.95; // scatter distance multiplier
+const SIZE = 0.8; // shape size multiplier
+
+// Icon geometry while it forms in the centre of the frame.
+// Icon units (logo viewBox) -> screen px at the 2.4x "stage" scale.
+const STAGE_SCALE = 2.4;
+const K = (1200 / 1026) * STAGE_SCALE;
+const ICON_CX = 970.45;
+const ICON_CY = 62.6;
+const toScreen = (ux: number, uy: number) => ({
+  x: (ux - ICON_CX) * K,
+  y: (uy - ICON_CY) * K,
+});
+// Arm centrelines (icon units): top arm runs into the corner, side arm runs down from it
+const TOP_ARM = { from: [928, 12], to: [1003, 25] };
+const SIDE_ARM = { from: [1003, 25], to: [1011, 114] };
+const ARM_THICKNESS = 24; // icon units
+
+type Slot = {
+  x: number;
+  y: number;
+  angle: number;
+  length: number;
+  round?: boolean;
+};
+
+const slotsAlong = (
+  arm: { from: number[]; to: number[] },
+  count: number,
+): Slot[] => {
+  const [x1, y1] = arm.from;
+  const [x2, y2] = arm.to;
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+  const seg = len / count;
+  return new Array(count).fill(0).map((_, i) => {
+    const t = (i + 0.5) / count;
+    const p = toScreen(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t);
+    return { x: p.x, y: p.y, angle, length: (seg + ARM_THICKNESS * 0.55) * K };
+  });
+};
+
+// 5 segments build the top arm, 6 the side arm, 1 caps the corner
+const SLOTS: Slot[] = [
+  ...slotsAlong(TOP_ARM, 5),
+  ...slotsAlong(SIDE_ARM, 6),
+  { ...toScreen(1002, 24), angle: 45, length: ARM_THICKNESS * K, round: true },
+];
 
 type Shape = {
   x: number;
   y: number;
   size: number;
   color: string;
-  radius: string;
+  radius: number[]; // corner radii as fraction of size
   delay: number;
   spin: number;
   rot0: number;
@@ -52,20 +99,24 @@ const PEACH = "#F2B48F";
 const PALE = "#F7D9C6";
 const GREY = "#B9B8B4";
 
-// circle = "50%", rounded square = "22%", quarter/petal = "50% 50% 50% 8%"
+const CIRCLE = [0.5, 0.5, 0.5, 0.5];
+const SQUARE = [0.22, 0.22, 0.22, 0.22];
+const PETAL = [0.5, 0.5, 0.5, 0.08];
+
+// Order matches SLOTS (5 top arm, 6 side arm, 1 corner)
 const SHAPES: Shape[] = [
-  { x: 0, y: 0, size: 96, color: ORANGE, radius: "50%", delay: 2, spin: 0, rot0: 0, orbit: 10, orbitSpeed: 1.2, convergeDelay: 4 },
-  { x: -230, y: -40, size: 70, color: INK, radius: "22%", delay: 6, spin: 2.2, rot0: 20, orbit: 22, orbitSpeed: 1.6, convergeDelay: 0 },
-  { x: 180, y: -150, size: 62, color: PEACH, radius: "50%", delay: 8, spin: 0, rot0: 0, orbit: 18, orbitSpeed: 1.9, convergeDelay: 2 },
-  { x: 330, y: 20, size: 88, color: ORANGE, radius: "50% 50% 50% 8%", delay: 10, spin: -1.6, rot0: 40, orbit: 26, orbitSpeed: 1.1, convergeDelay: 1 },
-  { x: -380, y: -150, size: 44, color: PEACH, radius: "50%", delay: 12, spin: 0, rot0: 0, orbit: 16, orbitSpeed: 2.2, convergeDelay: 3 },
-  { x: -330, y: 140, size: 84, color: PALE, radius: "50% 50% 50% 8%", delay: 9, spin: 1.4, rot0: -30, orbit: 20, orbitSpeed: 1.4, convergeDelay: 2 },
-  { x: 120, y: 170, size: 54, color: INK, radius: "50%", delay: 7, spin: 0, rot0: 0, orbit: 20, orbitSpeed: 1.7, convergeDelay: 0 },
-  { x: -90, y: 150, size: 46, color: ORANGE, radius: "22%", delay: 14, spin: -2.6, rot0: 10, orbit: 14, orbitSpeed: 2.0, convergeDelay: 5 },
-  { x: 260, y: -250, size: 22, color: ORANGE, radius: "50%", delay: 16, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.6, convergeDelay: 6 },
-  { x: -130, y: -200, size: 58, color: GREY, radius: "22%", delay: 11, spin: 1.9, rot0: 35, orbit: 18, orbitSpeed: 1.3, convergeDelay: 1 },
-  { x: 430, y: 200, size: 34, color: INK, radius: "50%", delay: 15, spin: 0, rot0: 0, orbit: 14, orbitSpeed: 2.3, convergeDelay: 3 },
-  { x: -470, y: 30, size: 30, color: ORANGE, radius: "50%", delay: 13, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.1, convergeDelay: 4 },
+  { x: -380, y: -150, size: 44, color: PEACH, radius: CIRCLE, delay: 12, spin: 0, rot0: 0, orbit: 16, orbitSpeed: 2.2, convergeDelay: 0 },
+  { x: -230, y: -40, size: 70, color: INK, radius: SQUARE, delay: 6, spin: 2.2, rot0: 20, orbit: 22, orbitSpeed: 1.6, convergeDelay: 2 },
+  { x: -130, y: -200, size: 58, color: GREY, radius: SQUARE, delay: 11, spin: 1.9, rot0: 35, orbit: 18, orbitSpeed: 1.3, convergeDelay: 3 },
+  { x: 180, y: -150, size: 62, color: PEACH, radius: CIRCLE, delay: 8, spin: 0, rot0: 0, orbit: 18, orbitSpeed: 1.9, convergeDelay: 5 },
+  { x: 260, y: -250, size: 26, color: ORANGE, radius: CIRCLE, delay: 16, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.6, convergeDelay: 6 },
+  { x: 0, y: 0, size: 90, color: ORANGE, radius: CIRCLE, delay: 2, spin: 0, rot0: 0, orbit: 10, orbitSpeed: 1.2, convergeDelay: 6 },
+  { x: 330, y: 20, size: 84, color: ORANGE, radius: PETAL, delay: 10, spin: -1.6, rot0: 40, orbit: 26, orbitSpeed: 1.1, convergeDelay: 4 },
+  { x: 120, y: 170, size: 54, color: INK, radius: CIRCLE, delay: 7, spin: 0, rot0: 0, orbit: 20, orbitSpeed: 1.7, convergeDelay: 3 },
+  { x: -90, y: 150, size: 46, color: ORANGE, radius: SQUARE, delay: 14, spin: -2.6, rot0: 10, orbit: 14, orbitSpeed: 2.0, convergeDelay: 2 },
+  { x: 430, y: 200, size: 36, color: INK, radius: CIRCLE, delay: 15, spin: 0, rot0: 0, orbit: 14, orbitSpeed: 2.3, convergeDelay: 1 },
+  { x: -330, y: 140, size: 80, color: PALE, radius: PETAL, delay: 9, spin: 1.4, rot0: -30, orbit: 20, orbitSpeed: 1.4, convergeDelay: 0 },
+  { x: -470, y: 30, size: 32, color: ORANGE, radius: CIRCLE, delay: 13, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.1, convergeDelay: 8 },
 ];
 
 const clamp = {
@@ -79,9 +130,15 @@ export const CBTaxLogo: React.FC = () => {
 
   return (
     <AbsoluteFill name="Background" style={{ backgroundColor: "#F6F5F1" }}>
-      {/* Scattered brand shapes: pop in, drift and spin, then converge into the mark */}
-      <AbsoluteFill name="Shapes">
+      {/* Scattered brand shapes: pop in, drift and spin, then fly into
+          slots along the arrowhead and stretch into its segments */}
+      {/* Group fades as one so overlapping segments never show seams */}
+      <AbsoluteFill
+        name="Shapes"
+        style={{ opacity: interpolate(frame, [94, 99], [1, 0], clamp) }}
+      >
         {SHAPES.map((sh, i) => {
+          const slot = SLOTS[i];
           const pop = spring({
             frame: frame - sh.delay,
             fps,
@@ -91,35 +148,54 @@ export const CBTaxLogo: React.FC = () => {
           const t = frame / fps;
           const ox = Math.cos(t * sh.orbitSpeed + i) * sh.orbit;
           const oy = Math.sin(t * sh.orbitSpeed * 1.3 + i) * sh.orbit;
-          // Converge to the centre (where the icon forms)
-          const converge = interpolate(
+          // Travel into the slot
+          const c = interpolate(
             frame,
-            [CONVERGE_START + sh.convergeDelay, CONVERGE_END + sh.convergeDelay],
+            [CONVERGE_START + sh.convergeDelay, CONVERGE_END + sh.convergeDelay - 8],
             [0, 1],
-            { ...clamp, easing: Easing.bezier(0.55, 0, 0.7, 0.2) },
+            { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
           );
-          // Burst outward from centre to scatter position on entry
+          // Morph (shape, colour, size) slightly later than travel
+          const m = interpolate(
+            frame,
+            [CONVERGE_START + sh.convergeDelay + 8, CONVERGE_END + sh.convergeDelay],
+            [0, 1],
+            { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
+          );
           const spread = interpolate(pop, [0, 1], [0.15, 1]);
-          const x = (sh.x * SPREAD * spread + ox) * (1 - converge);
-          const y = (sh.y * SPREAD * spread + oy) * (1 - converge);
-          const rot = sh.rot0 + frame * sh.spin + converge * 180;
-          const scale = pop * interpolate(converge, [0, 1], [1, 0.25]);
-          const opacity = interpolate(converge, [0.85, 1], [1, 0], clamp);
+          const fx = sh.x * SPREAD * spread + ox;
+          const fy = sh.y * SPREAD * spread + oy;
+          const x = fx + (slot.x - fx) * c;
+          const y = fy + (slot.y - fy) * c;
+
+          // Rotate to the arm's angle by the shortest route (segments are symmetric at 180deg)
+          const freeRot = sh.rot0 + frame * sh.spin;
+          const target =
+            slot.angle + 180 * Math.round((freeRot - slot.angle) / 180);
+          const rot = freeRot + (target - freeRot) * c;
+
+          const size = sh.size * SIZE;
+          const w = size + (slot.length - size) * m;
+          const h = size + (ARM_THICKNESS * K - size) * m;
+          const finalRadius = (slot.round ? 0.5 : 0.18) * ARM_THICKNESS * K;
+          const radius = sh.radius
+            .map((r) => `${r * size + (finalRadius - r * size) * m}px`)
+            .join(" ");
+
           return (
             <div
               key={i}
               style={{
                 position: "absolute",
-                left: 960 - (sh.size * SIZE) / 2,
-                top: 540 - (sh.size * SIZE) / 2,
-                width: sh.size * SIZE,
-                height: sh.size * SIZE,
-                backgroundColor: sh.color,
-                borderRadius: sh.radius,
+                left: 960 - w / 2,
+                top: 540 - h / 2,
+                width: w,
+                height: h,
+                backgroundColor: interpolateColors(m, [0, 1], [sh.color, ORANGE]),
+                borderRadius: radius,
                 translate: `${x}px ${y}px`,
                 rotate: `${rot}deg`,
-                scale: String(scale),
-                opacity,
+                scale: String(pop),
               }}
             />
           );
@@ -164,7 +240,7 @@ export const CBTaxLogo: React.FC = () => {
                   style={{
                     translate: interpolate(
                       frame,
-                      [112 + i * 5, 138 + i * 5],
+                      [118 + i * 5, 144 + i * 5],
                       ["0px 230px", "0px 0px"],
                       { ...clamp, easing: Easing.bezier(0.16, 1, 0.3, 1) },
                     ),
@@ -185,11 +261,11 @@ export const CBTaxLogo: React.FC = () => {
               height: 146.4,
               translate: interpolate(
                 frame,
-                [100, 128],
+                [106, 132],
                 ["-534px 85px", "0px 0px"],
                 { ...clamp, easing: Easing.bezier(0.7, 0, 0.2, 1) },
               ),
-              scale: interpolate(frame, [74, 87, 94, 100, 128], [0, 2.75, 2.4, 2.4, 1], {
+              scale: interpolate(frame, [94, 99, 104, 106, 132], [2.4, 2.52, 2.4, 2.4, 1], {
                 ...clamp,
                 easing: [
                   Easing.bezier(0.16, 1, 0.3, 1),
@@ -198,10 +274,7 @@ export const CBTaxLogo: React.FC = () => {
                   Easing.bezier(0.7, 0, 0.2, 1),
                 ],
               }),
-              rotate: interpolate(frame, [74, 96], ["-120deg", "0deg"], {
-                ...clamp,
-                easing: Easing.bezier(0.16, 1, 0.3, 1),
-              }),
+              opacity: interpolate(frame, [88, 94], [0, 1], clamp),
             }}
           >
             <svg
