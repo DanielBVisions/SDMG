@@ -3,12 +3,14 @@ import {
   Easing,
   Interactive,
   interpolate,
+  spring,
   useCurrentFrame,
+  useVideoConfig,
 } from "remotion";
 
 // Logo artwork (viewBox 1026 x 271) rendered 1200px wide => scale 1.1696.
-// Icon = orange arrowhead (top right). Concept: an R&D "growth trajectory"
-// line climbs a blueprint grid, forms the arrowhead, which then settles
+// Icon = orange arrowhead (top right). Concept: brand-coloured shapes pop in,
+// drift and spin, then converge and merge into the arrowhead, which settles
 // beside the wordmark as the letters rise into place.
 
 const C_PATH =
@@ -27,6 +29,45 @@ const ICON_PATH =
 const INK = "#1D1D20";
 const ORANGE = "#E58A57";
 
+const CONVERGE_START = 54;
+const CONVERGE_END = 78;
+const SPREAD = 1.3; // scatter distance multiplier
+const SIZE = 1.35; // shape size multiplier
+
+type Shape = {
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  radius: string;
+  delay: number;
+  spin: number;
+  rot0: number;
+  orbit: number;
+  orbitSpeed: number;
+  convergeDelay: number;
+};
+
+const PEACH = "#F2B48F";
+const PALE = "#F7D9C6";
+const GREY = "#B9B8B4";
+
+// circle = "50%", rounded square = "22%", quarter/petal = "50% 50% 50% 8%"
+const SHAPES: Shape[] = [
+  { x: 0, y: 0, size: 96, color: ORANGE, radius: "50%", delay: 2, spin: 0, rot0: 0, orbit: 10, orbitSpeed: 1.2, convergeDelay: 4 },
+  { x: -230, y: -40, size: 70, color: INK, radius: "22%", delay: 6, spin: 2.2, rot0: 20, orbit: 22, orbitSpeed: 1.6, convergeDelay: 0 },
+  { x: 180, y: -150, size: 62, color: PEACH, radius: "50%", delay: 8, spin: 0, rot0: 0, orbit: 18, orbitSpeed: 1.9, convergeDelay: 2 },
+  { x: 330, y: 20, size: 88, color: ORANGE, radius: "50% 50% 50% 8%", delay: 10, spin: -1.6, rot0: 40, orbit: 26, orbitSpeed: 1.1, convergeDelay: 1 },
+  { x: -380, y: -150, size: 44, color: PEACH, radius: "50%", delay: 12, spin: 0, rot0: 0, orbit: 16, orbitSpeed: 2.2, convergeDelay: 3 },
+  { x: -330, y: 140, size: 84, color: PALE, radius: "50% 50% 50% 8%", delay: 9, spin: 1.4, rot0: -30, orbit: 20, orbitSpeed: 1.4, convergeDelay: 2 },
+  { x: 120, y: 170, size: 54, color: INK, radius: "50%", delay: 7, spin: 0, rot0: 0, orbit: 20, orbitSpeed: 1.7, convergeDelay: 0 },
+  { x: -90, y: 150, size: 46, color: ORANGE, radius: "22%", delay: 14, spin: -2.6, rot0: 10, orbit: 14, orbitSpeed: 2.0, convergeDelay: 5 },
+  { x: 260, y: -250, size: 22, color: ORANGE, radius: "50%", delay: 16, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.6, convergeDelay: 6 },
+  { x: -130, y: -200, size: 58, color: GREY, radius: "22%", delay: 11, spin: 1.9, rot0: 35, orbit: 18, orbitSpeed: 1.3, convergeDelay: 1 },
+  { x: 430, y: 200, size: 34, color: INK, radius: "50%", delay: 15, spin: 0, rot0: 0, orbit: 14, orbitSpeed: 2.3, convergeDelay: 3 },
+  { x: -470, y: 30, size: 30, color: ORANGE, radius: "50%", delay: 13, spin: 0, rot0: 0, orbit: 12, orbitSpeed: 2.1, convergeDelay: 4 },
+];
+
 const clamp = {
   extrapolateLeft: "clamp",
   extrapolateRight: "clamp",
@@ -34,95 +75,56 @@ const clamp = {
 
 export const CBTaxLogo: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
   return (
     <AbsoluteFill name="Background" style={{ backgroundColor: "#F6F5F1" }}>
-      {/* Blueprint grid: precision / engineering, the R&D world CB Tax works in */}
-      <Interactive.Div
-        name="Blueprint grid"
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: 1920,
-          height: 1080,
-          opacity: interpolate(frame, [0, 20, 60, 100], [0, 1, 1, 0.5], {
-            ...clamp,
-            easing: Easing.bezier(0.45, 0, 0.55, 1),
-          }),
-        }}
-      >
-        <svg width={1920} height={1080} viewBox="0 0 1920 1080">
-          <defs>
-            <pattern id="grid" width={60} height={60} patternUnits="userSpaceOnUse" x={0} y={0}>
-              <path d="M60 0H0V60" fill="none" stroke={INK} strokeOpacity={0.08} strokeWidth={1.5} />
-            </pattern>
-            <radialGradient id="grid-fade" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="white" />
-              <stop offset="100%" stopColor="black" />
-            </radialGradient>
-            <mask id="grid-mask">
-              <rect width={1920} height={1080} fill="url(#grid-fade)" />
-            </mask>
-          </defs>
-          <rect width={1920} height={1080} fill="url(#grid)" mask="url(#grid-mask)" />
-        </svg>
-      </Interactive.Div>
-
-      {/* Growth trajectory: the arrow shaft climbing toward the arrowhead */}
-      <svg
-        width={1920}
-        height={1080}
-        viewBox="0 0 1920 1080"
-        style={{ position: "absolute", inset: 0 }}
-      >
-        <line
-          x1={606}
-          y1={903}
-          x2={1072}
-          y2={437}
-          stroke={ORANGE}
-          strokeWidth={8}
-          strokeLinecap="round"
-          pathLength={1}
-          strokeDasharray="1 1"
-          style={{
-            strokeDashoffset: interpolate(
-              frame,
-              [8, 38, 60, 72],
-              [1, 0, 0, -1],
-              {
-                ...clamp,
-                easing: [
-                  Easing.bezier(0.65, 0, 0.35, 1),
-                  Easing.linear,
-                  Easing.bezier(0.55, 0, 0.45, 1),
-                ],
-              },
-            ),
-          }}
-        />
-        {/* Data-point ticks along the trajectory */}
-        {[0.25, 0.5, 0.75].map((t, i) => (
-          <circle
-            key={t}
-            cx={606 + (1072 - 606) * t}
-            cy={903 - (903 - 437) * t}
-            r={9}
-            fill="#F6F5F1"
-            stroke={ORANGE}
-            strokeWidth={4}
-            style={{
-              opacity: interpolate(
-                frame,
-                [12 + i * 7.5, 18 + i * 7.5, 58, 70],
-                [0, 1, 1, 0],
-                clamp,
-              ),
-            }}
-          />
-        ))}
-      </svg>
+      {/* Scattered brand shapes: pop in, drift and spin, then converge into the mark */}
+      <AbsoluteFill name="Shapes">
+        {SHAPES.map((sh, i) => {
+          const pop = spring({
+            frame: frame - sh.delay,
+            fps,
+            config: { damping: 12, stiffness: 140, mass: 0.6 },
+          });
+          // Gentle orbit while floating
+          const t = frame / fps;
+          const ox = Math.cos(t * sh.orbitSpeed + i) * sh.orbit;
+          const oy = Math.sin(t * sh.orbitSpeed * 1.3 + i) * sh.orbit;
+          // Converge to the centre (where the icon forms)
+          const converge = interpolate(
+            frame,
+            [CONVERGE_START + sh.convergeDelay, CONVERGE_END + sh.convergeDelay],
+            [0, 1],
+            { ...clamp, easing: Easing.bezier(0.55, 0, 0.7, 0.2) },
+          );
+          // Burst outward from centre to scatter position on entry
+          const spread = interpolate(pop, [0, 1], [0.15, 1]);
+          const x = (sh.x * SPREAD * spread + ox) * (1 - converge);
+          const y = (sh.y * SPREAD * spread + oy) * (1 - converge);
+          const rot = sh.rot0 + frame * sh.spin + converge * 180;
+          const scale = pop * interpolate(converge, [0, 1], [1, 0.25]);
+          const opacity = interpolate(converge, [0.85, 1], [1, 0], clamp);
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: 960 - (sh.size * SIZE) / 2,
+                top: 540 - (sh.size * SIZE) / 2,
+                width: sh.size * SIZE,
+                height: sh.size * SIZE,
+                backgroundColor: sh.color,
+                borderRadius: sh.radius,
+                translate: `${x}px ${y}px`,
+                rotate: `${rot}deg`,
+                scale: String(scale),
+                opacity,
+              }}
+            />
+          );
+        })}
+      </AbsoluteFill>
 
       {/* Logo lockup, 1200px wide, centred */}
       <AbsoluteFill
@@ -135,7 +137,7 @@ export const CBTaxLogo: React.FC = () => {
             position: "relative",
             width: 1200,
             height: 317,
-            scale: interpolate(frame, [70, 180], [0.97, 1], {
+            scale: interpolate(frame, [100, 200], [0.97, 1], {
               ...clamp,
               easing: Easing.bezier(0.16, 1, 0.3, 1),
             }),
@@ -162,7 +164,7 @@ export const CBTaxLogo: React.FC = () => {
                   style={{
                     translate: interpolate(
                       frame,
-                      [82 + i * 5, 106 + i * 5],
+                      [112 + i * 5, 138 + i * 5],
                       ["0px 230px", "0px 0px"],
                       { ...clamp, easing: Easing.bezier(0.16, 1, 0.3, 1) },
                     ),
@@ -183,11 +185,11 @@ export const CBTaxLogo: React.FC = () => {
               height: 146.4,
               translate: interpolate(
                 frame,
-                [62, 92],
+                [100, 128],
                 ["-534px 85px", "0px 0px"],
                 { ...clamp, easing: Easing.bezier(0.7, 0, 0.2, 1) },
               ),
-              scale: interpolate(frame, [34, 48, 54, 62, 92], [2.2, 2.5, 2.4, 2.4, 1], {
+              scale: interpolate(frame, [74, 87, 94, 100, 128], [0, 2.75, 2.4, 2.4, 1], {
                 ...clamp,
                 easing: [
                   Easing.bezier(0.16, 1, 0.3, 1),
@@ -195,6 +197,10 @@ export const CBTaxLogo: React.FC = () => {
                   Easing.linear,
                   Easing.bezier(0.7, 0, 0.2, 1),
                 ],
+              }),
+              rotate: interpolate(frame, [74, 96], ["-120deg", "0deg"], {
+                ...clamp,
+                easing: Easing.bezier(0.16, 1, 0.3, 1),
               }),
             }}
           >
@@ -204,44 +210,11 @@ export const CBTaxLogo: React.FC = () => {
               viewBox="916.9 0 107.1 125.2"
               style={{ overflow: "visible" }}
             >
-              <defs>
-                <mask id="icon-reveal" maskUnits="userSpaceOnUse" x={880} y={-40} width={180} height={200}>
-                  {/* Both arms grow out from the tip */}
-                  <path
-                    d="M1012 22 L905 10"
-                    stroke="white"
-                    strokeWidth={44}
-                    strokeLinecap="square"
-                    pathLength={1}
-                    strokeDasharray="1 1"
-                    style={{
-                      strokeDashoffset: interpolate(frame, [34, 52], [1, 0], {
-                        ...clamp,
-                        easing: Easing.bezier(0.16, 1, 0.3, 1),
-                      }),
-                    }}
-                  />
-                  <path
-                    d="M1012 22 L1018 140"
-                    stroke="white"
-                    strokeWidth={44}
-                    strokeLinecap="square"
-                    pathLength={1}
-                    strokeDasharray="1 1"
-                    style={{
-                      strokeDashoffset: interpolate(frame, [34, 52], [1, 0], {
-                        ...clamp,
-                        easing: Easing.bezier(0.16, 1, 0.3, 1),
-                      }),
-                    }}
-                  />
-                </mask>
-              </defs>
               <path
                 d={ICON_PATH}
                 fill={ORANGE}
                 fillRule="evenodd"
-                mask="url(#icon-reveal)"
+               
               />
             </svg>
           </Interactive.Div>
