@@ -89,16 +89,20 @@ const cbtaxGrid: GridMarqueeProps = {
   background: "#ECECEC",
 };
 
-// CBTax carousel: vertical column, each card stops at centre, then moves up again.
+// CBTax carousel: vertical column; each card overshoots centre slightly, settles, moves on.
 const cbtaxCarousel: CarouselStackProps = {
   screens: ["40", "41", "49"].map((f) => `grid/frame-${f}.jpg`),
   cardWidth: 860,
   sideScale: 0.62,
-  sideDim: 0.55,
+  sideDim: 0.45,
+  dimColor: "#F6EFED",
+  cardShadow: "0 24px 70px rgba(29,29,32,0.16), 0 4px 14px rgba(29,29,32,0.08)",
   gap: 70,
-  stepFrames: 60, // 2s per item
-  holdFrames: 27, // 0.9s stopped at centre, then a 1.1s move
-  background: "#1D1D20",
+  stepFrames: 66, // 2.2s per item, same spring as the orbit
+  damping: 0.7, // swings ~3.5% past centre, then settles
+  stiffness: 8.5,
+  drift: 0.03,
+  background: continuous.background, // same off-white as the orbit
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -161,10 +165,10 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="CBTaxCarousel"
         component={CarouselStack}
-        durationInFrames={carouselDuration(cbtaxCarousel)} // 3 items x 2s = 6s loop
+        durationInFrames={carouselDuration(cbtaxCarousel)} // 3 items x 2.2s = 6.6s loop
         fps={FPS}
-        width={1080}
-        height={1350}
+        width={1920}
+        height={1080}
         defaultProps={cbtaxCarousel}
       />
     </>

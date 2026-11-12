@@ -47,7 +47,7 @@ const springAt = (t: number, damping: number, stiffness: number) => {
 // 0 -> 1 over a step: spring with a smooth-start time warp (so a turn gathers pace instead
 // of kicking off), normalised to land exactly on 1, plus a constant drift. The drift keeps it
 // moving through centre and matches the speed where one step hands over to the next.
-const stepCurve = (l: number, damping: number, stiffness: number, drift: number) => {
+export const stepCurve = (l: number, damping: number, stiffness: number, drift: number) => {
   const tau = l * l * (2 - l);
   const s = springAt(tau, damping, stiffness) / springAt(1, damping, stiffness);
   return (1 - drift) * s + drift * l;

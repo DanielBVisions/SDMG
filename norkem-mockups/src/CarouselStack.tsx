@@ -1,12 +1,5 @@
-import {
-  AbsoluteFill,
-  Easing,
-  Img,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
+import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { stepCurve } from "./OrbitRing";
 
 export type CarouselStackProps = {
   /** Screens (paths in public/), 1440x800. */
@@ -15,12 +8,20 @@ export type CarouselStackProps = {
   cardWidth: number;
   /** Scale of the cards above and below centre. */
   sideScale: number;
-  /** How dark the side cards get (0-1). */
+  /** How far the side cards fade toward dimColor (0-1). */
   sideDim: number;
+  /** Colour side cards fade toward: the background on light, black on dark. */
+  dimColor: string;
+  cardShadow: string;
   gap: number;
-  /** Frames per item: the hold at centre plus the move to the next. */
+  /** Frames per item: the move, the slight overshoot and the settle at centre. */
   stepFrames: number;
-  holdFrames: number;
+  /** Spring damping ratio. Lower = bigger overshoot. 0.7 ~= 3.5% past centre. */
+  damping: number;
+  /** Spring frequency. Higher = arrives sooner, leaving a longer stop at centre. */
+  stiffness: number;
+  /** Small constant creep so the column never fully stops. */
+  drift: number;
   background: string;
 };
 
@@ -28,9 +29,9 @@ export const carouselDuration = (p: Pick<CarouselStackProps, "screens" | "stepFr
   p.screens.length * p.stepFrames;
 
 const ASPECT = 800 / 1440;
-const ease = Easing.bezier(0.7, 0, 0.2, 1);
 
-// Cards travel up the column; each one stops dead centre, holds, then the column moves on.
+// Cards travel up the column; each one swings slightly past centre, settles there, then the
+// column moves on (same spring motion as the orbit).
 // The deck is repeated so a card never visibly jumps from top to bottom, and the column moves
 // exactly one deck per loop, so the loop is seamless.
 export const CarouselStack: React.FC<CarouselStackProps> = ({
@@ -38,9 +39,13 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
   cardWidth,
   sideScale,
   sideDim,
+  dimColor,
+  cardShadow,
   gap,
   stepFrames,
-  holdFrames,
+  damping,
+  stiffness,
+  drift,
   background,
 }) => {
   const frame = useCurrentFrame();
@@ -49,11 +54,7 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
   const n = ring.length;
 
   const step = Math.floor(frame / stepFrames);
-  const t = interpolate(frame - step * stepFrames, [holdFrames, stepFrames], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: ease,
-  });
+  const t = stepCurve((frame - step * stepFrames) / stepFrames, damping, stiffness, drift);
   const scroll = step + t;
 
   const h = cardWidth * ASPECT;
@@ -92,6 +93,7 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
               transform: `translateY(${y}px) scale(${scale})`,
               borderRadius: 22 / scale,
               overflow: "hidden",
+              boxShadow: cardShadow,
             }}
           >
             <Img
@@ -102,7 +104,7 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "#000",
+                background: dimColor,
                 opacity: a * sideDim,
               }}
             />
