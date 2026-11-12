@@ -1,5 +1,12 @@
-import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { stepCurve } from "./OrbitRing";
+import {
+  AbsoluteFill,
+  Easing,
+  Img,
+  interpolate,
+  staticFile,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 
 export type CarouselStackProps = {
   /** Screens (paths in public/), 1440x800. */
@@ -14,14 +21,12 @@ export type CarouselStackProps = {
   dimColor: string;
   cardShadow: string;
   gap: number;
-  /** Frames per item: the move, the slight overshoot and the settle at centre. */
+  /** Frames per item: the slow creep through centre plus the move to the next. */
   stepFrames: number;
-  /** Spring damping ratio. Lower = bigger overshoot. 0.7 ~= 3.5% past centre. */
-  damping: number;
-  /** Spring frequency. Higher = arrives sooner, leaving a longer stop at centre. */
-  stiffness: number;
-  /** Small constant creep so the column never fully stops. */
-  drift: number;
+  /** Share of each step spent creeping slowly through centre (0-1). */
+  slowFraction: number;
+  /** Creep speed as a share of a full step per step-length; also how far it creeps. */
+  creep: number;
   background: string;
 };
 
@@ -29,9 +34,24 @@ export const carouselDuration = (p: Pick<CarouselStackProps, "screens" | "stepFr
   p.screens.length * p.stepFrames;
 
 const ASPECT = 800 / 1440;
+const moveEase = Easing.inOut(Easing.cubic);
 
-// Cards travel up the column; each one swings slightly past centre, settles there, then the
-// column moves on (same spring motion as the orbit).
+// 0 -> 1 over a step. The step starts and ends in a slow creep, so a card arrives just below
+// centre, keeps drifting slowly up through it, then eases off to the next. The eased move has
+// zero speed at its ends, so the speed where creep meets move is the creep speed: no jolt, no
+// stop, no reversal.
+const creepCurve = (l: number, slowFraction: number, creep: number) => {
+  const half = slowFraction / 2;
+  const move = interpolate(l, [half, 1 - half], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: moveEase,
+  });
+  return creep * l + (1 - creep) * move;
+};
+
+// Cards travel up the column; each one arrives just below centre, creeps slowly up through
+// it, then the column moves on.
 // The deck is repeated so a card never visibly jumps from top to bottom, and the column moves
 // exactly one deck per loop, so the loop is seamless.
 export const CarouselStack: React.FC<CarouselStackProps> = ({
@@ -43,9 +63,8 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
   cardShadow,
   gap,
   stepFrames,
-  damping,
-  stiffness,
-  drift,
+  slowFraction,
+  creep,
   background,
 }) => {
   const frame = useCurrentFrame();
@@ -53,9 +72,12 @@ export const CarouselStack: React.FC<CarouselStackProps> = ({
   const ring = [...screens, ...screens, ...screens];
   const n = ring.length;
 
-  const step = Math.floor(frame / stepFrames);
-  const t = stepCurve((frame - step * stepFrames) / stepFrames, damping, stiffness, drift);
-  const scroll = step + t;
+  // Offset by half the slow window so frame 0 is a card dead centre mid-creep.
+  const f = frame + (slowFraction / 2) * stepFrames;
+  const step = Math.floor(f / stepFrames);
+  const t = creepCurve((f - step * stepFrames) / stepFrames, slowFraction, creep);
+  // Shift so the creep is centred on each card: centre is passed half way through the creep.
+  const scroll = step + t - (creep * slowFraction) / 2;
 
   const h = cardWidth * ASPECT;
   const hSide = h * sideScale;

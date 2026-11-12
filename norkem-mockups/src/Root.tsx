@@ -89,7 +89,7 @@ const cbtaxGrid: GridMarqueeProps = {
   background: "#ECECEC",
 };
 
-// CBTax carousel: vertical column; each card overshoots centre slightly, settles, moves on.
+// CBTax carousel: vertical column; each card arrives just below centre, creeps up through it, moves on.
 const cbtaxCarousel: CarouselStackProps = {
   screens: ["40", "41", "49"].map((f) => `grid/frame-${f}.jpg`),
   cardWidth: 860,
@@ -98,10 +98,9 @@ const cbtaxCarousel: CarouselStackProps = {
   dimColor: "#F6EFED",
   cardShadow: "0 24px 70px rgba(29,29,32,0.16), 0 4px 14px rgba(29,29,32,0.08)",
   gap: 70,
-  stepFrames: 66, // 2.2s per item, same spring as the orbit
-  damping: 0.7, // swings ~3.5% past centre, then settles
-  stiffness: 8.5,
-  drift: 0.03,
+  stepFrames: 66, // 2.2s per item
+  slowFraction: 0.4, // ~0.9s creeping slowly up through centre, then a ~1.3s move
+  creep: 0.16, // arrives ~15px below centre and drifts ~30px up through it, never stops
   background: continuous.background, // same off-white as the orbit
 };
 
