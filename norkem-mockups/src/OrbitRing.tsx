@@ -26,6 +26,8 @@ export type OrbitRingProps = {
    * transition brings the scene in), then turns as soon as it has landed.
    */
   startFrame?: number;
+  /** Hairline around each card, so dark frames still read on a dark background. */
+  cardOutline?: string;
   background: string;
 };
 
@@ -67,6 +69,7 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
   stiffness,
   drift,
   startFrame = 0,
+  cardOutline = "1px solid rgba(42,2,2,0.08)",
   background,
 }) => {
   const frame = useCurrentFrame() - startFrame;
@@ -117,7 +120,7 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({
               `rotateY(${angle}deg)`,
               `translateZ(${-radius}px)`,
             ].join(" "),
-            outline: "1px solid rgba(42,2,2,0.08)",
+            outline: cardOutline,
           }}
         >
           {card.kind === "screen" ? (

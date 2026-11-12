@@ -1,5 +1,5 @@
 import { Composition } from "remotion";
-import { DECK_A, DECK_B, DECK_C } from "./cards";
+import { DECK_A, DECK_B, DECK_C, DECK_CBTAX } from "./cards";
 import { HelixDeck, HelixDeckProps, helixDuration } from "./HelixDeck";
 import { OrbitRing, OrbitRingProps, orbitDuration } from "./OrbitRing";
 import { Showreel, ShowreelProps, showreelDuration } from "./Showreel";
@@ -64,6 +64,14 @@ const showreel: ShowreelProps = {
   shutterAngle: 180,
 };
 
+// CBTax test: same orbit, four cbtax.com frames, on #1D1D20.
+const cbtaxOrbit: OrbitRingProps = {
+  ...orbit,
+  cards: DECK_CBTAX,
+  background: "#1D1D20",
+  cardOutline: "1px solid rgba(255,255,255,0.12)",
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -102,6 +110,15 @@ export const RemotionRoot: React.FC = () => {
         width={WIDTH}
         height={HEIGHT}
         defaultProps={showreel}
+      />
+      <Composition
+        id="CBTaxOrbit"
+        component={OrbitRing}
+        durationInFrames={orbitDuration(cbtaxOrbit)}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+        defaultProps={cbtaxOrbit}
       />
     </>
   );
