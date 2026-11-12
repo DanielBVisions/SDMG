@@ -46,9 +46,10 @@ const toScreen = (ux: number, uy: number) => ({
   y: (uy - ICON_CY) * K,
 });
 // Arm centrelines (icon units): top arm runs into the corner, side arm runs down from it
-const TOP_ARM = { from: [928, 12], to: [1003, 25] };
-const SIDE_ARM = { from: [1003, 25], to: [1011, 114] };
+const TOP_ARM = { from: [912, 10], to: [1004, 25] };
+const SIDE_ARM = { from: [1004, 25], to: [1014, 132] };
 const ARM_THICKNESS = 24; // icon units
+const LANDED_THICKNESS = 40; // pieces overfill the arm, the clip trims them
 
 type Slot = {
   x: number;
@@ -78,7 +79,7 @@ const slotsAlong = (
 const SLOTS: Slot[] = [
   ...slotsAlong(TOP_ARM, 5),
   ...slotsAlong(SIDE_ARM, 6),
-  { ...toScreen(1002, 24), angle: 45, length: ARM_THICKNESS * K, round: true },
+  { ...toScreen(1004, 22), angle: 45, length: 40 * K, round: true },
 ];
 
 type Shape = {
@@ -124,6 +125,67 @@ const clamp = {
   extrapolateRight: "clamp",
 } as const;
 
+const piece = (sh: Shape, i: number, frame: number, fps: number) => {
+  const slot = SLOTS[i];
+  const pop = spring({
+    frame: frame - sh.delay,
+    fps,
+    config: { damping: 12, stiffness: 140, mass: 0.6 },
+  });
+  // Gentle orbit while floating
+  const t = frame / fps;
+  const ox = Math.cos(t * sh.orbitSpeed + i) * sh.orbit;
+  const oy = Math.sin(t * sh.orbitSpeed * 1.3 + i) * sh.orbit;
+  // Travel into the slot
+  const c = interpolate(
+    frame,
+    [CONVERGE_START + sh.convergeDelay, CONVERGE_END + sh.convergeDelay - 8],
+    [0, 1],
+    { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
+  );
+  // Morph (shape, colour, size) slightly after travel starts
+  const m = interpolate(
+    frame,
+    [CONVERGE_START + sh.convergeDelay + 6, CONVERGE_END + sh.convergeDelay],
+    [0, 1],
+    { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
+  );
+  const spread = interpolate(pop, [0, 1], [0.15, 1]);
+  const fx = sh.x * SPREAD * spread + ox;
+  const fy = sh.y * SPREAD * spread + oy;
+  const x = fx + (slot.x - fx) * c;
+  const y = fy + (slot.y - fy) * c;
+
+  // Rotate to the arm's angle by the shortest route
+  const freeRot = sh.rot0 + frame * sh.spin;
+  const target = slot.angle + 180 * Math.round((freeRot - slot.angle) / 180);
+  const rot = freeRot + (target - freeRot) * c;
+
+  const size = sh.size * SIZE;
+  const w = size + (slot.length - size) * m;
+  const h = size + (LANDED_THICKNESS * K - size) * m;
+  const finalRadius = (slot.round ? 0.5 : 0.1) * LANDED_THICKNESS * K;
+  const radius = sh.radius
+    .map((r) => `${r * size + (finalRadius - r * size) * m}px`)
+    .join(" ");
+
+  return {
+    clip: interpolate(m, [0.25, 0.85], [0, 1], clamp),
+    style: {
+      position: "absolute",
+      left: 960 - w / 2,
+      top: 540 - h / 2,
+      width: w,
+      height: h,
+      backgroundColor: interpolateColors(m, [0, 1], [sh.color, ORANGE]),
+      borderRadius: radius,
+      translate: `${x}px ${y}px`,
+      rotate: `${rot}deg`,
+      scale: String(pop),
+    } as React.CSSProperties,
+  };
+};
+
 export const CBTaxLogo: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -132,73 +194,37 @@ export const CBTaxLogo: React.FC = () => {
     <AbsoluteFill name="Background" style={{ backgroundColor: "#F6F5F1" }}>
       {/* Scattered brand shapes: pop in, drift and spin, then fly into
           slots along the arrowhead and stretch into its segments */}
-      {/* Group fades as one so overlapping segments never show seams */}
+      {/* Clip = the exact logo mark, in screen space while it forms in the centre */}
+      <svg width={0} height={0} style={{ position: "absolute" }}>
+        <defs>
+          <clipPath id="mark-clip" clipPathUnits="userSpaceOnUse">
+            <path
+              d={ICON_PATH}
+              transform={`translate(960 540) scale(${K}) translate(${-ICON_CX} ${-ICON_CY})`}
+            />
+          </clipPath>
+        </defs>
+      </svg>
+
+      {/* Free shapes (unclipped) fade out as they land... */}
+      <AbsoluteFill name="Shapes">
+        {SHAPES.map((sh, i) => {
+          const p = piece(sh, i, frame, fps);
+          return <div key={i} style={{ ...p.style, opacity: 1 - p.clip }} />;
+        })}
+      </AbsoluteFill>
+      {/* ...while the same shapes, trimmed to the real mark outline, fade in.
+          Once all have landed they fill the mark exactly. */}
       <AbsoluteFill
-        name="Shapes"
-        style={{ opacity: interpolate(frame, [94, 99], [1, 0], clamp) }}
+        name="Shapes in mark"
+        style={{
+          clipPath: "url(#mark-clip)",
+          opacity: interpolate(frame, [95, 96], [1, 0], clamp),
+        }}
       >
         {SHAPES.map((sh, i) => {
-          const slot = SLOTS[i];
-          const pop = spring({
-            frame: frame - sh.delay,
-            fps,
-            config: { damping: 12, stiffness: 140, mass: 0.6 },
-          });
-          // Gentle orbit while floating
-          const t = frame / fps;
-          const ox = Math.cos(t * sh.orbitSpeed + i) * sh.orbit;
-          const oy = Math.sin(t * sh.orbitSpeed * 1.3 + i) * sh.orbit;
-          // Travel into the slot
-          const c = interpolate(
-            frame,
-            [CONVERGE_START + sh.convergeDelay, CONVERGE_END + sh.convergeDelay - 8],
-            [0, 1],
-            { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
-          );
-          // Morph (shape, colour, size) slightly later than travel
-          const m = interpolate(
-            frame,
-            [CONVERGE_START + sh.convergeDelay + 8, CONVERGE_END + sh.convergeDelay],
-            [0, 1],
-            { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) },
-          );
-          const spread = interpolate(pop, [0, 1], [0.15, 1]);
-          const fx = sh.x * SPREAD * spread + ox;
-          const fy = sh.y * SPREAD * spread + oy;
-          const x = fx + (slot.x - fx) * c;
-          const y = fy + (slot.y - fy) * c;
-
-          // Rotate to the arm's angle by the shortest route (segments are symmetric at 180deg)
-          const freeRot = sh.rot0 + frame * sh.spin;
-          const target =
-            slot.angle + 180 * Math.round((freeRot - slot.angle) / 180);
-          const rot = freeRot + (target - freeRot) * c;
-
-          const size = sh.size * SIZE;
-          const w = size + (slot.length - size) * m;
-          const h = size + (ARM_THICKNESS * K - size) * m;
-          const finalRadius = (slot.round ? 0.5 : 0.18) * ARM_THICKNESS * K;
-          const radius = sh.radius
-            .map((r) => `${r * size + (finalRadius - r * size) * m}px`)
-            .join(" ");
-
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: 960 - w / 2,
-                top: 540 - h / 2,
-                width: w,
-                height: h,
-                backgroundColor: interpolateColors(m, [0, 1], [sh.color, ORANGE]),
-                borderRadius: radius,
-                translate: `${x}px ${y}px`,
-                rotate: `${rot}deg`,
-                scale: String(pop),
-              }}
-            />
-          );
+          const p = piece(sh, i, frame, fps);
+          return <div key={i} style={{ ...p.style, opacity: p.clip }} />;
         })}
       </AbsoluteFill>
 
@@ -213,7 +239,7 @@ export const CBTaxLogo: React.FC = () => {
             position: "relative",
             width: 1200,
             height: 317,
-            scale: interpolate(frame, [100, 200], [0.97, 1], {
+            scale: interpolate(frame, [96, 200], [1, 1.03], {
               ...clamp,
               easing: Easing.bezier(0.16, 1, 0.3, 1),
             }),
@@ -240,7 +266,7 @@ export const CBTaxLogo: React.FC = () => {
                   style={{
                     translate: interpolate(
                       frame,
-                      [118 + i * 5, 144 + i * 5],
+                      [122 + i * 5, 148 + i * 5],
                       ["0px 230px", "0px 0px"],
                       { ...clamp, easing: Easing.bezier(0.16, 1, 0.3, 1) },
                     ),
@@ -261,11 +287,11 @@ export const CBTaxLogo: React.FC = () => {
               height: 146.4,
               translate: interpolate(
                 frame,
-                [106, 132],
-                ["-534px 85px", "0px 0px"],
+                [110, 136],
+                ["-533.9px 85.3px", "0px 0px"],
                 { ...clamp, easing: Easing.bezier(0.7, 0, 0.2, 1) },
               ),
-              scale: interpolate(frame, [94, 99, 104, 106, 132], [2.4, 2.52, 2.4, 2.4, 1], {
+              scale: interpolate(frame, [98, 103, 108, 110, 136], [2.4, 2.52, 2.4, 2.4, 1], {
                 ...clamp,
                 easing: [
                   Easing.bezier(0.16, 1, 0.3, 1),
@@ -274,7 +300,7 @@ export const CBTaxLogo: React.FC = () => {
                   Easing.bezier(0.7, 0, 0.2, 1),
                 ],
               }),
-              opacity: interpolate(frame, [88, 94], [0, 1], clamp),
+              opacity: interpolate(frame, [95, 96], [0, 1], clamp),
             }}
           >
             <svg
